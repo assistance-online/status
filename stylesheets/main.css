@@ -1,0 +1,145 @@
+html {
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-size: 14px;
+    font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    color: #212529;
+    min-height: 100%;
+}
+
+nav.navbar {
+    background-color: #009499;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    height: 50px;
+    padding: 0 30px;
+}
+
+nav.navbar img {
+    height: 35px;
+    margin: 8px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #f4f6f9;
+}
+
+div.container {
+    max-width: 900px;
+    width: 90%;
+    padding: 0 30px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div.content-header {
+    padding: 15px 0;
+}
+
+
+h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 1.2rem;
+    margin-bottom: .5rem;
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+p, ul {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+ul {
+    list-style-type: disc;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.bg-success {
+    background-color: #28a745 !important;
+}
+
+.bg-info {
+    background-color: #2fabae !important;
+}
+
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-info {
+    color: #2fabae !important;
+}
+
+a,
+a:link,
+a:visited {
+    color: #009499;
+    text-decoration: none;
+    border: none;
+}
+a:hover {
+    color: #2fabae;
+    cursor: pointer;
+}
+
+.nav-link,
+.nav-link:link,
+.nav-link:visited {
+    font-weight: 400;
+    color: #b4e0e2;
+    border-right: 1px solid #2fabae;
+    transition: background-color .5s ease;
+    position: relative;
+    height: 2.5rem;
+    display: inline-block;
+    padding: .5rem 30px .5rem 15px;
+}
+
+.nav-link:last-child {
+    border-right: none;
+    padding: .5rem 15px .5rem 15px;
+}
+
+.nav-link:hover {
+    color: #fff;
+    background-color: #2fabae;
+}
+
+
+.card {
+    border-radius: .25rem;
+}
+
