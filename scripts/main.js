@@ -1,4 +1,5 @@
-$(document).ready(function () {    
+$(document).ready(function () {        
+    var config = {};
     var labels = [];
     var openIssues = [];
     var closedIssues = [];
@@ -11,7 +12,7 @@ $(document).ready(function () {
             type: 'GET',
             dataType: 'json',
             beforeSend: function (xhr) {
-                xhr.setRequestHeader('Authorization', 'token 920a5605df00967e8251a434066907eb9e583ebf')
+                xhr.setRequestHeader('Authorization', `token ${config.github.token}`)
             }
         });
     }
@@ -244,7 +245,7 @@ $(document).ready(function () {
     }
 
     function getLabelsFromGithub() {
-        getRequestGithub('https://api.github.com/repos/assistance-online/status/labels')
+        getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/labels`)
             .then(result => {
                 labels = result.map(x => x.name);
                 labels.forEach(label => {
@@ -260,7 +261,7 @@ $(document).ready(function () {
     }
 
     function getOpenIssuesFromGithub() {
-        getRequestGithub('https://api.github.com/repos/assistance-online/status/issues?state=open')
+        getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/issues?state=open`)
             .then(result => {
                 openIssues = result;
 
@@ -284,19 +285,22 @@ $(document).ready(function () {
     }  
 
     function getClosedIssuesFromGithub() {
-        getRequestGithub('https://api.github.com/repos/assistance-online/status/issues?state=closed')
+        getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/issues?state=closed`)
             .then(result => {
                 closedIssues = result;
 
                 processIssues(false);
             });        
-    }  
-    
-    
+    }            
 
-    // Actually get the data
-    getLabelsFromGithub();
-    getClosedIssuesFromGithub();
+    // Get configuration values
+    $.getJSON('../config.json', (data) => {
+        config = data; 
+
+        // Actually get the data
+        getLabelsFromGithub();
+        getClosedIssuesFromGithub();
+    });    
 });
 
 
