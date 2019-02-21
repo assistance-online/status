@@ -4,6 +4,7 @@ $(document).ready(function () {
     var openIssues = [];
     var closedIssues = [];
     var items = [];
+    var markDownConverter = new showdown.Converter();
     var systemStatus = StatusEnum.Unknown;
 
     function getRequestGithub(url) {
@@ -113,7 +114,7 @@ $(document).ready(function () {
                 <dd>                
                     <small>${moment(issue.created_at).format('D MMMM YYYY HH:mm')}</small> 
                     ${labelsHtml}
-                    <br>${issue.body}
+                    <br>${markDownConverter.makeHtml(issue.body)}
                 </dd>`;
 
             itemsHtml += itemHtml;
