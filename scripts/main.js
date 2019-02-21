@@ -109,7 +109,7 @@ $(document).ready(function () {
 
             var itemHtml = `
                 <dt>
-                    <a target="_blank" href="${issue.html_url}">${issue.title}</a>                    
+                    <a target="_blank" href="${issue.html_url}"><h2>${issue.title}</h2></a>                    
                 </dt>
                 <dd>                
                     <small>${moment(issue.created_at).format('D MMMM YYYY HH:mm')}</small> 
