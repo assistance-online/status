@@ -97,9 +97,9 @@ $(document).ready(function () {
             var labelsHtml = '';
             var status = getStatusBasedOnIssueMilestone(issue.milestone);
             var backgroundColor = getBackgroundColorClass(status);
-            labelsHtml += `
-                <span class="badge ${backgroundColor} text-white">${issue.milestone.title}</span>
-            `;
+            if (issue.milestone) {
+                labelsHtml += `<span class="badge ${backgroundColor} text-white">${issue.milestone.title}</span>`;
+            }
 
             issue.labels.forEach(label => {
                 labelsHtml += `
@@ -227,6 +227,10 @@ $(document).ready(function () {
     }
 
     function getStatusBasedOnIssueMilestone(milestone) {
+        if (!milestone) {
+            return StatusEnum.Unknown;
+        }
+
         switch (milestone.title.toLowerCase()) {
             case 'xl':
                 return StatusEnum.XL;
