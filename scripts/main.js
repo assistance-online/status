@@ -115,6 +115,7 @@ $(document).ready(function () {
                     <small>${moment(issue.created_at).format('D MMMM YYYY HH:mm')}</small> 
                     ${labelsHtml}
                     <br>${markDownConverter.makeHtml(issue.body)}
+                    <hr>
                 </dd>`;
 
             itemsHtml += itemHtml;
