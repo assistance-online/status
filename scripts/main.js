@@ -251,7 +251,7 @@ $(document).ready(function () {
     }
 
     function getLabelsFromGithub() {
-        getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/labels`)
+        return getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/labels`)
             .then(result => {
                 labels = result.map(x => x.name);
                 labels.forEach(label => {
@@ -259,21 +259,20 @@ $(document).ready(function () {
                         name: label,
                         milestones: []
                     });
-                });
-
-
-                getOpenIssuesFromGithub();                
+                });         
             });
     }
 
-    function getOpenIssuesFromGithub() {
-        getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/issues?state=open`)
+    function getIssuesFromGithub() {
+        return getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/issues?state=all`)
             .then(result => {
-                openIssues = result;
+                openIssues = result.filter(issue => issue.state === 'open');
 
-                openIssues.forEach(issue => {  
+                closedIssues = result.filter(issue => issue.state === 'closed');
+
+                openIssues.forEach(issue => {
                     if (issue.milestone && issue.labels) {
-                        issue.labels.forEach(label => { 
+                        issue.labels.forEach(label => {
                             var item = items.find(x => x.name === label.name)
                             if (item && item.milestones.findIndex(milestone => milestone.title === issue.milestone.title) === -1) {
                                 item.milestones.push(issue.milestone);
@@ -283,29 +282,21 @@ $(document).ready(function () {
                 });
 
                 processIssues(true);
+                processIssues(false);
+
                 processStatusItems();
                 processSystemStatus();
 
                 $('#open-issues-count').text(openIssues.length);
             });        
-    }  
-
-    function getClosedIssuesFromGithub() {
-        getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/issues?state=closed`)
-            .then(result => {
-                closedIssues = result;
-
-                processIssues(false);
-            });        
-    }            
+    }          
 
     // Get configuration values
     $.getJSON('../config.json', (data) => {
         config = data; 
 
         // Actually get the data
-        getLabelsFromGithub();
-        getClosedIssuesFromGithub();
+        getLabelsFromGithub().then(() => getIssuesFromGithub());
     });    
 });
 
