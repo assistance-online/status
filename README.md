@@ -17,6 +17,7 @@ Met de milestone wordt aangegeven wat de impact/status van een issue is. Grote i
 |S                    |Minor issue                                           |
 |Under investigation  |Onderzoek naar oorzaak loopt nog                      |
 |Maintenance          |Onderhoudswerkzaamheden kunnen voor verstoring zorgen |
+|Announcement         |Aankondiging voor bijvoorbeeld onderhoud              |
 
 ## Labels
 
@@ -24,16 +25,18 @@ Naast milestones geven labels aan op welke systeem onderdelen de melding betrekk
 
 |Label                |Service              |Omschrijving                          |
 |---------------------|---------------------|--------------------------------------|
-|api                  |ApiSvc               |Storing in de interne API             | 
-|core                 |CoreSvc              |Storing in het backend gedeelte van AO|
-|dataexe adapter v1   |DataExeAdapterV1Svc  |Storing in DataExe v1                 |
-|dataexe adapter v2   |DataExeAdapterV2Svc  |Storing in DataExe v2                 |
-|dataexe receiver     |DataExeReceiverSvc   |Storing in de DataExe proxy koppeling | 
-|driverapp            |DriverApp (Android)  |Storing in de Driver App              |
-|eurocross adapter    |EurocrossSvc         |Storing in de Eurocross koppeling     |
-|identity             |IdentitySvc          |Storing in inloggen / authenticatie   |
-|simn                 |SIMNSvc              |Storing in de SIMN import             |
-|webapp               |WebApp               |Storing in het web gedeelte (UI)      |
+|AO Api               |ApiSvc               |De interne API                        | 
+|AO backend/core      |CoreSvc              |Het backend gedeelte van AO           |
+|AO chauffeurs app    |DriverApp (Android)  |De Driver App                         |
+|AO identityservice   |IdentitySvc          |Inloggen / authenticatie              |
+|AO webapplicatie     |WebApp               |Web gedeelte (UI)                     |
+|Integratie Allianz   |                     |De Allianz koppeling                  |
+|Integratie Eurocross |                     |De Eurocross koppeling                |
+|Integratie Logicx    |                     |De Logicx koppeling                   |
+|Integratie SIMN      |                     |De SIMN koppeling                     |
+|Integratie SOS       |                     |De SOS koppeling                      |
+|Integratie Transplan |                     |De Transplan koppeling                |
+|Integratie VHD       |                     |De VHD koppeling                      |
 
 ## Sluiten van een issue
 
