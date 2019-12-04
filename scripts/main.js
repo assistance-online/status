@@ -28,7 +28,7 @@ $(document).ready(function () {
 
         var text = '';
         
-        switch (systemStatus) {
+        switch (systemStatus) {            
             case StatusEnum.Maintenance:
                 text = 'Systeem is in onderhoud';
                 break;
@@ -42,6 +42,9 @@ $(document).ready(function () {
                 break;
             case StatusEnum.UnderInvestigation:
                 text = 'Er zijn meldingen geweest over verstoringen, deze worden momenteel onderzocht.';
+                break;
+            case StatusEnum.Announcement:
+                text = 'Nieuwe aankondiging';
                 break;
             default:
                 text = 'Momenteel zijn er geen actuele verstoringen bekend.'
@@ -129,7 +132,7 @@ $(document).ready(function () {
     }
 
     function getStatusIcon(status) {
-        switch (status) {
+        switch (status) {            
             case StatusEnum.Online:
                 return 'fa-check';
             case StatusEnum.XL:                
@@ -141,6 +144,8 @@ $(document).ready(function () {
                 return 'fa-search';
             case StatusEnum.Maintenance:
                 return 'fa-tools';
+            case StatusEnum.Announcement:
+                return 'fa-envelope-open-text';
             default:
                 return 'fa-question';
         }
@@ -173,9 +178,10 @@ $(document).ready(function () {
                 return 'text-warning';            
             case StatusEnum.S:
                 return 'text-info';
-            case StatusEnum.UnderInvestigation:
+            case StatusEnum.UnderInvestigation:            
                 return 'text-white';
             case StatusEnum.Maintenance:
+            case StatusEnum.Announcement:
                 return 'text-dark';
             default:
                 return '';
@@ -198,6 +204,8 @@ $(document).ready(function () {
                 return 'Wordt onderzocht';
             case StatusEnum.Maintenance:
                 return 'Onderhoud';
+            case StatusEnum.Announcement:
+                return 'Aankondiging';
             default:
                 return 'Onbekend';
         }
@@ -222,6 +230,8 @@ $(document).ready(function () {
             return StatusEnum.S;        
         } else if (milestonesEnum.indexOf(StatusEnum.UnderInvestigation) !== -1) {
             return StatusEnum.UnderInvestigation;
+        } else if (milestonesEnum.indexOf(StatusEnum.Announcement) !== -1) {
+            return StatusEnum.Announcement;
         } else {
             return StatusEnum.Unknown;
         } 
@@ -245,6 +255,8 @@ $(document).ready(function () {
                 return StatusEnum.Maintenance;
             case 'under investigation':
                 return StatusEnum.UnderInvestigation;
+            case 'announcement':
+                return StatusEnum.Announcement;
             default:
                 return StatusEnum.Unknown;
         }
@@ -309,5 +321,6 @@ const StatusEnum = {
     M: 'RegularPriority',
     S: 'MinorIssue',
     UnderInvestigation: 'UnderInvestigation',
-    Maintenance: 'Maintenance'
+    Maintenance: 'Maintenance',
+    Announcement: 'Announcement'
 }
