@@ -3,6 +3,7 @@ name: Release aankondiging
 about: Template voor het aankondigen van een release
 title: Release 2020.xx op DD-MM-JJJJ om HH:mm
 labels: AO api, AO backend/core, AO webapplicatie
+milestones: Announcement
 assignees: ''
 
 ---
@@ -14,5 +15,3 @@ Dinsdagochtend <DATUM> om 5:30 uur wordt er een update uitgerold. Naar verwachti
 In deze versie zitten de volgende wijzigingen:
 
 * AO-xxxx Issue 1
-* AO-xxxx Issue 2
-* AO-xxxx Issue 3
