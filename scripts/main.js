@@ -1,4 +1,4 @@
-$(document).ready(function () {        
+$(document).ready(function () {
     var config = {};
     var labels = [];
     var openIssues = [];
@@ -20,15 +20,15 @@ $(document).ready(function () {
 
     function processSystemStatus() {
         var itemMilestones = [];
-        items.map(item => {            
+        items.map(item => {
             itemMilestones = itemMilestones.concat(item.milestones);
         });
         systemStatus = getStatusBasedOnIssueMilestones(itemMilestones);
 
 
         var text = '';
-        
-        switch (systemStatus) {            
+
+        switch (systemStatus) {
             case StatusEnum.Maintenance:
                 text = 'Systeem is in onderhoud';
                 break;
@@ -50,7 +50,7 @@ $(document).ready(function () {
                 text = 'Momenteel zijn er geen actuele verstoringen bekend.'
                 break;
         }
-        
+
         var html = `
             <div class="row no-gutters">
                 <div class="col-sm-1 ${getBackgroundColorClass(systemStatus)} ">
@@ -64,22 +64,21 @@ $(document).ready(function () {
                     </div>
                 </div>
             </div>`;
-        
-        $('#system-status').html(html);        
+
+        $('#system-status').html(html);
     }
 
     function processStatusItems() {
         var itemsHtml = '';
-        
+
         items.forEach(item => {
             var status = getStatusBasedOnIssueMilestones(item.milestones);
-
             var iconClass = getStatusIcon(status);
             var textColorClass = getTextColorClass(status);
             textColorClass = textColorClass === 'text-white' ? 'text-dark' : textColorClass;
             var label = getStatusDescription(status);
 
-            var itemHtml = `        
+            var itemHtml = `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>
                     <i class="fas ${iconClass} ${textColorClass} mr-2"></i>
@@ -99,6 +98,7 @@ $(document).ready(function () {
         issues.forEach(issue => {
             var labelsHtml = '';
             var status = getStatusBasedOnIssueMilestone(issue.milestone);
+            var iconClass = getStatusIcon(status);
             var backgroundColor = getBackgroundColorClass(status);
             if (issue.milestone) {
                 labelsHtml += `<span class="badge ${backgroundColor} text-white">${issue.milestone.title}</span>`;
@@ -112,10 +112,15 @@ $(document).ready(function () {
 
             var itemHtml = `
                 <dt>
-                    <a target="_blank" href="${issue.html_url}"><h2>${issue.title}</h2></a>                    
+                    <a target="_blank" href="${issue.html_url}">
+                        <h2>
+                            <i class="fas ${iconClass} mr-2"></i>
+                            ${issue.title}
+                        </h2>
+                    </a>
                 </dt>
-                <dd>                
-                    <small>${moment(issue.created_at).format('D MMMM YYYY HH:mm')}</small> 
+                <dd>
+                    <small>${moment(issue.created_at).format('D MMMM YYYY HH:mm')}</small>
                     ${labelsHtml}
                     <br>${markDownConverter.makeHtml(issue.body)}
                     <hr>
@@ -132,14 +137,14 @@ $(document).ready(function () {
     }
 
     function getStatusIcon(status) {
-        switch (status) {            
+        switch (status) {
             case StatusEnum.Online:
                 return 'fa-check';
-            case StatusEnum.XL:                
+            case StatusEnum.XL:
             case StatusEnum.L:
-            case StatusEnum.M:                
+            case StatusEnum.M:
             case StatusEnum.S:
-                return 'fa-exclamation-triangle';            
+                return 'fa-exclamation-triangle';
             case StatusEnum.UnderInvestigation:
                 return 'fa-search';
             case StatusEnum.Maintenance:
@@ -149,21 +154,21 @@ $(document).ready(function () {
             default:
                 return 'fa-question';
         }
-    }    
+    }
 
     function getBackgroundColorClass(status) {
         switch (status) {
             case StatusEnum.Online:
                 return 'bg-success';
             case StatusEnum.XL:
-                return 'bg-danger';            
+                return 'bg-danger';
             case StatusEnum.L:
             case StatusEnum.M:
-                return 'bg-warning';            
+                return 'bg-warning';
             case StatusEnum.S:
                 return 'bg-info';
             default:
-                return 'bg-dark';            
+                return 'bg-dark';
         }
     }
 
@@ -172,13 +177,13 @@ $(document).ready(function () {
             case StatusEnum.Online:
                 return 'text-success';
             case StatusEnum.XL:
-                return 'text-danger';            
+                return 'text-danger';
             case StatusEnum.L:
             case StatusEnum.M:
-                return 'text-warning';            
+                return 'text-warning';
             case StatusEnum.S:
                 return 'text-info';
-            case StatusEnum.UnderInvestigation:            
+            case StatusEnum.UnderInvestigation:
                 return 'text-white';
             case StatusEnum.Maintenance:
             case StatusEnum.Announcement:
@@ -193,11 +198,11 @@ $(document).ready(function () {
             case StatusEnum.Online:
                 return 'Online';
             case StatusEnum.XL:
-                return 'XL';            
+                return 'XL';
             case StatusEnum.L:
                 return 'L';
             case StatusEnum.M:
-                return 'M';            
+                return 'M';
             case StatusEnum.S:
                 return 'S';
             case StatusEnum.UnderInvestigation:
@@ -215,8 +220,8 @@ $(document).ready(function () {
         if (milestones.length === 0) {
             return StatusEnum.Online;
         }
-        
-        var milestonesEnum = milestones.map(milestone => getStatusBasedOnIssueMilestone(milestone));     
+
+        var milestonesEnum = milestones.map(milestone => getStatusBasedOnIssueMilestone(milestone));
 
         if (milestonesEnum.indexOf(StatusEnum.Maintenance) !== -1) {
             return StatusEnum.Maintenance;
@@ -227,14 +232,14 @@ $(document).ready(function () {
         } else if (milestonesEnum.indexOf(StatusEnum.M) !== -1) {
             return StatusEnum.M;
         } else if (milestonesEnum.indexOf(StatusEnum.S) !== -1) {
-            return StatusEnum.S;        
+            return StatusEnum.S;
         } else if (milestonesEnum.indexOf(StatusEnum.UnderInvestigation) !== -1) {
             return StatusEnum.UnderInvestigation;
         } else if (milestonesEnum.indexOf(StatusEnum.Announcement) !== -1) {
             return StatusEnum.Announcement;
         } else {
             return StatusEnum.Unknown;
-        } 
+        }
     }
 
     function getStatusBasedOnIssueMilestone(milestone) {
@@ -271,7 +276,7 @@ $(document).ready(function () {
                         name: label,
                         milestones: []
                     });
-                });         
+                });
             });
     }
 
@@ -300,16 +305,16 @@ $(document).ready(function () {
                 processSystemStatus();
 
                 $('#open-issues-count').text(openIssues.length);
-            });        
-    }          
+            });
+    }
 
     // Get configuration values
     $.getJSON('../config.json', (data) => {
-        config = data; 
+        config = data;
 
         // Actually get the data
         getLabelsFromGithub().then(() => getIssuesFromGithub());
-    });    
+    });
 });
 
 

@@ -1,19 +1,19 @@
 html {
-    margin: 0;
-    padding: 0;
-    text-align: left;
-    font-size: 14px;
+    margin     : 0;
+    padding    : 0;
+    text-align : left;
+    font-size  : 14px;
     font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif;
     font-weight: normal;
-    color: #212529;
-    min-height: 100%;
+    color      : #212529;
+    min-height : 100%;
 }
 
 nav.navbar {
     background-color: #009499;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    height: 50px;
-    padding: 0 30px;
+    box-shadow      : 0 2px 5px rgba(0, 0, 0, 0.5);
+    height          : 50px;
+    padding         : 0 30px;
 }
 
 nav.navbar img {
@@ -22,18 +22,18 @@ nav.navbar img {
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
+    margin          : 0;
+    padding         : 0;
+    height          : 100%;
+    width           : 100%;
     background-color: #f4f6f9;
 }
 
 div.container {
-    max-width: 900px;
-    width: 90%;
-    padding: 0 30px;
-    margin-left: auto;
+    max-width   : 900px;
+    width       : 90%;
+    padding     : 0 30px;
+    margin-left : auto;
     margin-right: auto;
 }
 
@@ -43,29 +43,30 @@ div.content-header {
 
 
 h1 {
-    font-size: 1.8rem;
-    margin: 0;
+    font-size  : 1.8rem;
+    margin     : 0;
     font-weight: 500;
     line-height: 1.2;
 }
 
 h2 {
-    font-size: 1.2rem;
-    margin-top: .5rem;
+    font-size    : 1.2rem;
+    margin-top   : .5rem;
     margin-bottom: .5rem;
-    font-weight: 400;
-    line-height: 1.2;
+    font-weight  : 400;
+    line-height  : 1.2;
 }
 
 h3 {
-    font-size: 1.1rem;    
+    font-size    : 1.1rem;
     margin-bottom: .5rem;
-    font-weight: 400;
-    line-height: 1.1;
+    font-weight  : 400;
+    line-height  : 1.1;
 }
 
-p, ul {
-    margin-top: 0;
+p,
+ul {
+    margin-top   : 0;
     margin-bottom: 1rem;
 }
 
@@ -74,20 +75,20 @@ p {
 }
 
 hr {
-    color: 1px solid #dddddd;
-    margin-top: 3rem;
+    color        : 1px solid #dddddd;
+    margin-top   : 3rem;
     margin-bottom: 3rem;
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%;
+    margin-left  : auto;
+    margin-right : auto;
+    width        : 50%;
 }
 
 ul {
-    list-style-type: disc;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
+    list-style-type     : disc;
+    margin-block-start  : 1em;
+    margin-block-end    : 1em;
+    margin-inline-start : 0px;
+    margin-inline-end   : 0px;
     padding-inline-start: 40px;
 }
 
@@ -131,35 +132,36 @@ dl dt h2 {
 a,
 a:link,
 a:visited {
-    color: #009499;
+    color          : #009499;
     text-decoration: none;
-    border: none;
+    border         : none;
 }
+
 a:hover {
-    color: #2fabae;
+    color : #2fabae;
     cursor: pointer;
 }
 
 .nav-link,
 .nav-link:link,
 .nav-link:visited {
-    font-weight: 400;
-    color: #b4e0e2;
+    font-weight : 400;
+    color       : #b4e0e2;
     border-right: 1px solid #2fabae;
-    transition: background-color .5s ease;
-    position: relative;
-    height: 2.5rem;
-    display: inline-block;
-    padding: .5rem 30px .5rem 15px;
+    transition  : background-color .5s ease;
+    position    : relative;
+    height      : 2.5rem;
+    display     : inline-block;
+    padding     : .5rem 30px .5rem 15px;
 }
 
 .nav-link:last-child {
     border-right: none;
-    padding: .5rem 15px .5rem 15px;
+    padding     : .5rem 15px .5rem 15px;
 }
 
 .nav-link:hover {
-    color: #fff;
+    color           : #fff;
     background-color: #2fabae;
 }
 
@@ -169,9 +171,9 @@ a:hover {
 }
 
 blockquote {
-    padding: 0 1em;
-    color: #666666;
-    border-left: 5px solid #bbbbbb;
-    margin-top: 0;
+    padding      : 0 1em;
+    color        : #666666;
+    border-left  : 5px solid #bbbbbb;
+    margin-top   : 0;
     margin-bottom: 16px;
 }
