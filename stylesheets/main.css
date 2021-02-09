@@ -96,6 +96,10 @@ dl dt h2 {
     font-size: 1.6rem;
 }
 
+dd img {
+    max-width: 100%;
+}
+
 .bg-danger {
     background-color: #dc3545 !important;
 }
