@@ -283,9 +283,9 @@ $(document).ready(function () {
     function getIssuesFromGithub() {
         return getRequestGithub(`https://api.github.com/repos/${config.github.repository}/status/issues?state=all`)
             .then(result => {
-                openIssues = result.filter(issue => issue.state === 'open');
+                openIssues = result.filter(issue => issue.state === 'open' && !issue.pull_request);
 
-                closedIssues = result.filter(issue => issue.state === 'closed');
+                closedIssues = result.filter(issue => issue.state === 'closed' && !issue.pull_request);
 
                 openIssues.forEach(issue => {
                     if (issue.milestone && issue.labels) {
