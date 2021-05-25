@@ -10,15 +10,16 @@ html {
 }
 
 nav.navbar {
-    background-color: #009499;
+    background-color: #1d937d;
     box-shadow      : 0 2px 5px rgba(0, 0, 0, 0.5);
     height          : 50px;
     padding         : 0 30px;
 }
 
 nav.navbar img {
-    height: 35px;
-    margin: 8px;
+    height : 35px;
+    margin : 8px;
+    padding: 0 8px 8px 8px;
 }
 
 body {
@@ -26,7 +27,7 @@ body {
     padding         : 0;
     height          : 100%;
     width           : 100%;
-    background-color: #f4f6f9;
+    background-color: #f4f4f9;
 }
 
 div.container {
@@ -101,15 +102,15 @@ dd img {
 }
 
 .bg-danger {
-    background-color: #dc3545 !important;
+    background-color: #d51c00 !important;
 }
 
 .bg-warning {
-    background-color: #ffc107 !important;
+    background-color: #fe9c39 !important;
 }
 
 .bg-success {
-    background-color: #28a745 !important;
+    background-color: #1f993c !important;
 }
 
 .bg-info {
@@ -118,15 +119,15 @@ dd img {
 
 
 .text-danger {
-    color: #dc3545 !important;
+    color: #d51c00 !important;
 }
 
 .text-warning {
-    color: #ffc107 !important;
+    color: #fe9c39 !important;
 }
 
 .text-success {
-    color: #28a745 !important;
+    color: #1f993c !important;
 }
 
 .text-info {
@@ -136,7 +137,7 @@ dd img {
 a,
 a:link,
 a:visited {
-    color          : #009499;
+    color          : #1d937d;
     text-decoration: none;
     border         : none;
 }
@@ -150,7 +151,7 @@ a:hover {
 .nav-link:link,
 .nav-link:visited {
     font-weight : 400;
-    color       : #b4e0e2;
+    color       : rgba(255, 255, 255, 0.85);
     border-right: 1px solid #2fabae;
     transition  : background-color .5s ease;
     position    : relative;
