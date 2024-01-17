@@ -13,7 +13,7 @@ $(document).ready(function () {
             type: 'GET',
             dataType: 'json',
             beforeSend: function (xhr) {
-                xhr.setRequestHeader('Authorization', `token ${config.github.token}`)
+                xhr.setRequestHeader('Authorization', `token ${config.github.token1}${config.github.token2}${config.github.token3}`);
             }
         });
     }
