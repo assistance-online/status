@@ -1,7 +1,7 @@
 ---
 name: Release aankondiging
 about: Template voor het aankondigen van een release
-title: Release 2025.xx op DD-MM-2025 om 11:30
+title: Release 2026.xx op DD-MM-2026 om 11:30
 labels: AO api, AO backend/core, AO webapplicatie
 milestone: Announcement
 assignees: ''
