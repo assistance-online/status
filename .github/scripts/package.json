@@ -1,0 +1,13 @@
+{
+  "name": "statuspage-build",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "dompurify": "3.4.17",
+    "jsdom": "31.0.0",
+    "marked": "18.2.0"
+  }
+}

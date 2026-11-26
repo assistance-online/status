@@ -5,8 +5,11 @@
     <base href="/">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <title>Assistance Online - Contact</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <script src="scripts/theme.js"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css"
         integrity="sha384-yEPZ7jP9S0QKiUQ0m3jjsO4ProIW7wvR9gXkI7JOGa2XVsw53Yke2bsdkBbjmmiX" crossorigin="anonymous">
@@ -29,56 +32,74 @@
                     <img src="images/ao-logo-small.svg" alt="Assistance Online">
                 </a>
 
-                <a href="/" class="nav-link">
-                    <i class="fas fa-thermometer-half"></i>
-                    Status
-                </a>
+                <div class="nav-actions">
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-thermometer-half" aria-hidden="true"></i>
+                        Status
+                    </a>
+                    <button type="button" class="nav-link theme-toggle" id="theme-toggle" aria-label="Donkere modus">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
         </nav>
 
-        <div class="container pt-5">
-
-
+        <main class="container pt-5 pb-5">
             <h1 class="page-title">
-                <i class="fas fa-satellite-dish"></i>
+                <i class="fas fa-satellite-dish" aria-hidden="true"></i>
                 Communicatie
             </h1>
 
-
-            <ul class="list-group">
-                <li class="list-group-item">
-                    <strong>Gebruikersvragen, kleinere incidenten en aanmelden wensen, ideeën en verbeterpunten</strong>
-                    kan via: <a href="mailto:ao@rgbplus.nl">ao@rgbplus.nl</a>
+            <article class="card contact-card status-online">
+                <div class="card-body">
+                    <h2 class="issue-title">
+                        <i class="fas fa-envelope status-icon me-2" aria-hidden="true"></i>Vragen, kleinere incidenten en wensen
+                    </h2>
+                    <p>
+                        Gebruikersvragen, kleinere incidenten en het aanmelden van wensen, ideeën en verbeterpunten
+                        kan via: <a href="mailto:ao@rgbplus.nl">ao@rgbplus.nl</a>
+                    </p>
                     <ul>
                         <li>
-                            Voordat je een vraag stelt, neem eens een kijkje op de <a
-                                href="https://rgbplus.atlassian.net/wiki/spaces/AS/overview">Assistance
-                                Online Wiki</a>.
+                            Voordat je een vraag stelt, neem eens een kijkje op <a
+                                href="https://help.assistanceonline.nl">Assistance Online Documentatie &amp;
+                                Support</a>.
                         </li>
-                        <li>Optioneel: geef een urgentie mee van XS (niet urgent) tot L (urgent). Bij urgentie XL is bellen sneller.
-                        </li>
+                        <li>Optioneel: geef een urgentie mee van XS (niet urgent) tot L (urgent). Bij urgentie XL is bellen sneller.</li>
                         <li>
                             Wees zo volledig mogelijk in je omschrijving van de melding. Voeg altijd een opdrachtnummer bij indien van toepassing. Screenshots helpen ook.
                         </li>
                     </ul>
-                </li>
-            </ul>
-            <ul class="list-group">
-                <li class="list-group-item">
-                    <strong>Urgente meldingen</strong> overdag via: <a href="tel:0572-745247">0572-745247</a>
-                    Urgente meldingen zijn verstoringen in het proces die niet nog één of meerdere dagen kunnen
-                    wachten.
-                    Het betreft hier dus geen ontbrekende functionaliteiten (zie bovenstaand). Deze meldingen zullen
-                    doorgaans binnen de lopende sprint worden opgepakt.
-                </li>
-            </ul>
-            <ul class="list-group">
-                <li class="list-group-item">
-                    Urgente meldingen buiten kantoortijd via het noodnummer van AO, dat uitgeleverd is aan klanten met de Plus-SLA.
-                    Dit is alleen bij <i>standstill</i> zaken.
-                </li>
-            </ul>
-        </div>
+                </div>
+            </article>
+
+            <article class="card contact-card status-l">
+                <div class="card-body">
+                    <h2 class="issue-title">
+                        <i class="fas fa-phone status-icon me-2" aria-hidden="true"></i>Urgente meldingen overdag
+                    </h2>
+                    <p>
+                        Bel <a href="tel:0572-745247">0572-745247</a>.
+                        Urgente meldingen zijn verstoringen in het proces die niet nog één of meerdere dagen kunnen
+                        wachten.
+                        Het betreft hier dus geen ontbrekende functionaliteiten (zie bovenstaand). Deze meldingen zullen
+                        doorgaans binnen de lopende sprint worden opgepakt.
+                    </p>
+                </div>
+            </article>
+
+            <article class="card contact-card status-xl">
+                <div class="card-body">
+                    <h2 class="issue-title">
+                        <i class="fas fa-exclamation-triangle status-icon me-2" aria-hidden="true"></i>Urgente meldingen buiten kantoortijd
+                    </h2>
+                    <p>
+                        Via het noodnummer van AO, dat uitgeleverd is aan klanten met de Plus-SLA.
+                        Dit is alleen bij <i>standstill</i> zaken.
+                    </p>
+                </div>
+            </article>
+        </main>
     </div>
 </body>
 

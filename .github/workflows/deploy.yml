@@ -35,12 +35,17 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: .github/scripts/package-lock.json
+
+      - name: Afhankelijkheden installeren
+        run: npm ci --prefix .github/scripts
 
       - name: Site samenstellen
         run: rsync -a --exclude='.git*' --exclude='_site' --exclude='README.md' ./ _site/
 
-      - name: status.json genereren
-        run: node .github/scripts/build-status.mjs _site/status.json
+      - name: status.json en feed.xml genereren
+        run: node .github/scripts/build-status.mjs _site
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

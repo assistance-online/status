@@ -5,8 +5,12 @@
     <base href="/">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <title>Assistance Online - Status</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" id="favicon">
+    <link rel="alternate" type="application/atom+xml" title="Assistance Online - Status" href="feed.xml">
+
+    <script src="scripts/theme.js"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css"
         integrity="sha384-yEPZ7jP9S0QKiUQ0m3jjsO4ProIW7wvR9gXkI7JOGa2XVsw53Yke2bsdkBbjmmiX" crossorigin="anonymous">
@@ -19,10 +23,6 @@
 
     <link rel="stylesheet" href="stylesheets/main.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"
-        integrity="sha384-GP2+CwBlakZSDJUr+E4JvbxpM75i1i8+RKkieQxzuyDZLG+5105E1OfHIjzcXyWH" crossorigin="anonymous" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.17/dist/purify.min.js"
-        integrity="sha384-P0JNneQf81HOl9VwNXK76cQ9VMD6Nfsnepxb0cCOg8+UzEdzgPHAPV4wVQrvYQSx" crossorigin="anonymous" defer></script>
     <script src="scripts/main.js" defer></script>
 </head>
 
@@ -34,41 +34,63 @@
                     <img src="images/ao-logo-small.svg" alt="Assistance Online">
                 </a>
 
-                <a href="contact.html" class="nav-link">
-                    <i class="fas fa-envelope"></i>
-                    Contact
-                </a>
+                <div class="nav-actions">
+                    <a href="contact.html" class="nav-link">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        Contact
+                    </a>
+                    <button type="button" class="nav-link theme-toggle" id="theme-toggle" aria-label="Donkere modus">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
         </nav>
 
-        <div class="container pt-5">
+        <main class="container pt-5 pb-5">
 
             <!-- Algemene systeem status -->
-            <div class="card mb-3" id="system-status">
-                <div class="row g-0">
-                    <div class="col-sm-1 bg-white">
-                        <div class="card-body text-center align-middle text-dark">
-                            <i class="fas fa-sync fa-spin fa-lg"></i>
-                        </div>
-                    </div>
-                    <div class="col-sm-11">
-                        <div class="card-body align-middle">
-                            <h5 class="card-title mb-0">Bezig met laden ...</h5>
-                        </div>
-                    </div>
-                </div>
+            <div class="card status-card status-loading mb-2" id="system-status" role="status" aria-live="polite">
+                <div class="status-card-icon"><i class="fas fa-sync fa-spin fa-lg" aria-hidden="true"></i></div>
+                <h5 class="card-title mb-0">Bezig met laden ...</h5>
             </div>
+            <p class="page-meta">
+                Laatst bijgewerkt: <span id="last-updated">-</span>
+                &middot;
+                <a href="feed.xml"><i class="fas fa-rss" aria-hidden="true"></i> RSS-feed</a>
+            </p>
 
             <!-- Status per onderdeel -->
-            <ul class="list-group mb-3" id="status-items"></ul>
+            <div class="list-group mb-2" id="status-items"></div>
+            <p class="page-meta">Klik op een onderdeel om alleen de meldingen daarvan te tonen.</p>
 
-            <h1>Actueel (<span id="open-issues-count">0</span>)</h1>
-            <dl id="open-issues" class="mb-5"></dl>
+            <div class="filter-info" id="filter-info" hidden>
+                <i class="fas fa-filter" aria-hidden="true"></i>
+                Meldingen voor <strong id="filter-name"></strong>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="filter-clear">
+                    <i class="fas fa-times" aria-hidden="true"></i> Filter wissen
+                </button>
+            </div>
+
+            <section id="planned-section" hidden>
+                <h1>Gepland (<span id="planned-count">0</span>)</h1>
+                <div id="planned-issues" class="issue-list"></div>
+            </section>
+
+            <section>
+                <h1>Actueel (<span id="current-count">0</span>)</h1>
+                <div id="current-issues" class="issue-list"></div>
+            </section>
 
             <hr>
-            <h1>Geschiedenis</h1>
-            <dl id="closed-issues" class="mb-5"></dl>
-        </div>
+
+            <section>
+                <h1>Geschiedenis</h1>
+                <div id="history-issues" class="issue-list"></div>
+                <div id="history-sentinel" class="history-sentinel" hidden>
+                    <i class="fas fa-sync fa-spin" aria-hidden="true"></i> Meer laden ...
+                </div>
+            </section>
+        </main>
     </div>
 </body>
 
