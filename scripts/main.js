@@ -25,6 +25,7 @@ const INCIDENT_SEVERITY = [StatusEnum.XL, StatusEnum.L, StatusEnum.M, StatusEnum
 const DOWNTIME_STATUSES = [StatusEnum.XL, StatusEnum.L];
 
 const STATUS_URL = 'status.json';
+const FAVICON_URL = 'images/favicon.svg';
 const REFRESH_INTERVAL_MS = 60 * 1000;
 const HISTORY_BATCH_SIZE = 10;
 const COLLAPSED_BODY_HEIGHT = 240;
@@ -358,14 +359,28 @@ function renderSystemStatusCard(statusKey, iconClass, text) {
         <h5 class="card-title mb-0">${escapeHtml(text)}</h5>`;
 }
 
-function renderFavicon(status) {
-    const colors = { online: '#1a7f32', xl: '#d51c00', l: '#fe9c39', m: '#fe9c39', s: '#1b7d80' };
-    const color = colors[getStatusKey(status)] ?? '#495057';
-    const mark = status === StatusEnum.Online
-        ? '<path d="M9 16.5l4.5 4.5L23 11.5" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>'
-        : '<text x="16" y="23" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#fff" text-anchor="middle">!</text>';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="${color}"/>${mark}</svg>`;
-    document.getElementById('favicon').href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+let faviconBase;
+
+// The AO plus with, when something is going on, a dot with an exclamation mark in the status colour
+// in the bottom-right corner (coordinates match the viewBox of images/favicon.svg).
+async function renderFavicon(status) {
+    const favicon = document.getElementById('favicon');
+    if (status === StatusEnum.Online) {
+        favicon.href = FAVICON_URL;
+        return;
+    }
+
+    const colors = { xl: ['#d51c00', '#fff'], l: ['#fe9c39', '#212529'], m: ['#fe9c39', '#212529'], s: ['#1b7d80', '#fff'] };
+    const [fill, mark] = colors[getStatusKey(status)] ?? ['#495057', '#fff'];
+    const dot = `<circle cx="154" cy="77" r="25" fill="${fill}" stroke="#fff" stroke-width="6"/>`
+        + `<rect x="150.5" y="61" width="7" height="20" rx="3.5" fill="${mark}"/><circle cx="154" cy="90" r="4" fill="${mark}"/>`;
+
+    try {
+        faviconBase ??= await fetch(FAVICON_URL).then(response => response.text());
+        favicon.href = `data:image/svg+xml,${encodeURIComponent(faviconBase.replace('</svg>', `${dot}</svg>`))}`;
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 function renderSystemStatus() {

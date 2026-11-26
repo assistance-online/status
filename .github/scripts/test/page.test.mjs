@@ -69,7 +69,10 @@ async function load({ hash = '', status = createStatus(), language } = {}) {
     window.matchMedia = () => ({ matches: false, addEventListener() {} });
     window.setInterval = () => 0;
     window.HTMLElement.prototype.scrollIntoView = function () {};
-    window.fetch = async () => {
+    window.fetch = async url => {
+        if (url === 'images/favicon.svg') {
+            return { ok: true, text: async () => read('images/favicon.svg') };
+        }
         fetchCount++;
         return { ok: true, json: async () => structuredClone(status) };
     };
@@ -101,7 +104,9 @@ describe('status page', () => {
         const document = await load();
         assert.match(document.getElementById('system-status').className, /status-xl/);
         assert.equal(text(document, '#system-status .card-title'), 'Ernstige verstoring geconstateerd');
-        assert.match(document.getElementById('favicon').href, /^data:image\/svg\+xml/);
+        const favicon = decodeURIComponent(document.getElementById('favicon').href);
+        assert.match(favicon, /^data:image\/svg\+xml,<svg/);
+        assert.match(favicon, /<circle cx="154" cy="77" r="25" fill="#d51c00"/);
     });
 
     it('lists announcements under planned without affecting component status', async () => {
@@ -262,5 +267,16 @@ describe('status page scheduling, analysis and search', () => {
         input.dispatchEvent(new dom.window.Event('input'));
         await new Promise(resolve => setTimeout(resolve, 250));
         assert.match(text(document, '#history-issues .empty-text'), /Geen eerdere meldingen gevonden voor “bestaat niet”/);
+    });
+});
+
+describe('favicon', () => {
+    afterEach(() => dom?.window.close());
+
+    it('shows the plain AO plus when there are no disruptions', async () => {
+        const status = createStatus();
+        status.openIssues = [];
+        const document = await load({ status });
+        assert.match(document.getElementById('favicon').href, /images\/favicon\.svg$/);
     });
 });
