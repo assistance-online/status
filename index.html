@@ -6,21 +6,32 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
     <title>Assistance Online - Status</title>
+    <meta name="description" content="Actuele status, storingen en gepland onderhoud van Assistance Online.">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Assistance Online">
+    <meta property="og:title" content="Assistance Online - Status">
+    <meta property="og:description" content="Actuele status, storingen en gepland onderhoud van Assistance Online.">
+    <meta property="og:url" content="https://status.assistanceonline.nl/">
+    <meta property="og:image" content="https://status.assistanceonline.nl/images/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="nl_NL">
+    <meta name="twitter:card" content="summary_large_image">
+
     <link rel="icon" type="image/x-icon" href="favicon.ico" id="favicon">
     <link rel="alternate" type="application/atom+xml" title="Assistance Online - Status" href="feed.xml">
 
+    <script src="scripts/i18n.js"></script>
     <script src="scripts/theme.js"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css"
         integrity="sha384-yEPZ7jP9S0QKiUQ0m3jjsO4ProIW7wvR9gXkI7JOGa2XVsw53Yke2bsdkBbjmmiX" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
         integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&display=swap">
-
     <link rel="stylesheet" href="stylesheets/main.css">
 
     <script src="scripts/main.js" defer></script>
@@ -37,9 +48,10 @@
                 <div class="nav-actions">
                     <a href="contact.html" class="nav-link">
                         <i class="fas fa-envelope" aria-hidden="true"></i>
-                        Contact
+                        <span data-i18n="nav.contact">Contact</span>
                     </a>
-                    <button type="button" class="nav-link theme-toggle" id="theme-toggle" aria-label="Donkere modus">
+                    <button type="button" class="nav-link nav-button" id="language-toggle">EN</button>
+                    <button type="button" class="nav-link nav-button" id="theme-toggle" aria-label="Donkere modus">
                         <i class="fas fa-moon" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -51,43 +63,54 @@
             <!-- Algemene systeem status -->
             <div class="card status-card status-loading mb-2" id="system-status" role="status" aria-live="polite">
                 <div class="status-card-icon"><i class="fas fa-sync fa-spin fa-lg" aria-hidden="true"></i></div>
-                <h5 class="card-title mb-0">Bezig met laden ...</h5>
+                <h5 class="card-title mb-0" data-i18n="status.loading">Bezig met laden ...</h5>
             </div>
             <p class="page-meta">
-                Laatst bijgewerkt: <span id="last-updated">-</span>
+                <span data-i18n="meta.lastUpdated">Laatst bijgewerkt:</span> <span id="last-updated">-</span>
                 &middot;
-                <a href="feed.xml"><i class="fas fa-rss" aria-hidden="true"></i> RSS-feed</a>
+                <a href="feed.xml"><i class="fas fa-rss" aria-hidden="true"></i> <span data-i18n="meta.feed">RSS-feed</span></a>
             </p>
 
             <!-- Status per onderdeel -->
             <div class="list-group mb-2" id="status-items"></div>
-            <p class="page-meta">Klik op een onderdeel om alleen de meldingen daarvan te tonen.</p>
+            <p class="page-meta" data-i18n="meta.filterHint">Klik op een onderdeel om alleen de meldingen daarvan te tonen.</p>
+
+            <details class="card availability mb-4">
+                <summary class="availability-title">
+                    <span data-i18n="availability.title">Beschikbaarheid afgelopen 90 dagen</span>
+                    <span class="availability-summary" id="availability-summary"></span>
+                </summary>
+                <div class="card-body pt-0">
+                    <ul class="availability-list" id="availability-list"></ul>
+                    <p class="page-meta mb-0" data-i18n="availability.legend"></p>
+                </div>
+            </details>
 
             <div class="filter-info" id="filter-info" hidden>
                 <i class="fas fa-filter" aria-hidden="true"></i>
-                Meldingen voor <strong id="filter-name"></strong>
+                <span data-i18n="filter.label">Meldingen voor</span> <strong id="filter-name"></strong>
                 <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="filter-clear">
-                    <i class="fas fa-times" aria-hidden="true"></i> Filter wissen
+                    <i class="fas fa-times" aria-hidden="true"></i> <span data-i18n="filter.clear">Filter wissen</span>
                 </button>
             </div>
 
             <section id="planned-section" hidden>
-                <h1>Gepland (<span id="planned-count">0</span>)</h1>
+                <h1><span data-i18n="section.planned">Gepland</span> (<span id="planned-count">0</span>)</h1>
                 <div id="planned-issues" class="issue-list"></div>
             </section>
 
             <section>
-                <h1>Actueel (<span id="current-count">0</span>)</h1>
+                <h1><span data-i18n="section.current">Actueel</span> (<span id="current-count">0</span>)</h1>
                 <div id="current-issues" class="issue-list"></div>
             </section>
 
             <hr>
 
             <section>
-                <h1>Geschiedenis</h1>
+                <h1 data-i18n="section.history">Geschiedenis</h1>
                 <div id="history-issues" class="issue-list"></div>
                 <div id="history-sentinel" class="history-sentinel" hidden>
-                    <i class="fas fa-sync fa-spin" aria-hidden="true"></i> Meer laden ...
+                    <i class="fas fa-sync fa-spin" aria-hidden="true"></i> <span data-i18n="section.loadMore">Meer laden ...</span>
                 </div>
             </section>
         </main>

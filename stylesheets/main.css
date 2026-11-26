@@ -83,7 +83,6 @@ html {
     margin     : 0;
     padding    : 0;
     font-size  : 14px;
-    font-family: 'Source Sans 3', 'Source Sans Pro', Arial, Helvetica, sans-serif;
     min-height : 100%;
 }
 
@@ -193,12 +192,18 @@ nav.navbar img {
     background-color: var(--ao-teal);
 }
 
+/* Bootstrap gives a focused nav-link its dark link colour; keep it readable on the green bar. */
+.nav-link:focus,
+.nav-link:focus-visible {
+    color: #ffffff;
+}
+
 .nav-actions {
     display    : flex;
     align-items: center;
 }
 
-.theme-toggle {
+.nav-button {
     border       : none;
     border-left  : 1px solid rgba(255, 255, 255, 0.3);
     background   : none;
@@ -208,9 +213,14 @@ nav.navbar img {
     text-align   : center;
 }
 
-.theme-toggle:focus-visible {
+.nav-button:focus-visible {
     outline       : 2px solid #ffffff;
     outline-offset: -2px;
+}
+
+#language-toggle {
+    font-size  : .85rem;
+    font-weight: 700;
 }
 
 /* ---------- Status ---------- */
@@ -303,8 +313,6 @@ nav.navbar img {
     opacity            : 0;
     transform          : translateY(12px);
     transition         : opacity .45s ease-out, transform .45s ease-out;
-    content-visibility : auto;
-    contain-intrinsic-size: auto 320px;
 }
 
 .issue.is-visible {
@@ -422,4 +430,146 @@ nav.navbar img {
     .issue-title {
         font-size: 1.2rem;
     }
+}
+
+/* ---------- Direct links ---------- */
+
+.issue-heading {
+    display        : flex;
+    align-items    : flex-start;
+    justify-content: space-between;
+    gap            : .75rem;
+}
+
+.issue-permalink {
+    flex      : none;
+    padding   : .25rem;
+    font-size : .9rem;
+    opacity   : 0;
+    transition: opacity .2s ease;
+}
+
+.issue:hover .issue-permalink,
+.issue-permalink:focus-visible {
+    opacity: .7;
+}
+
+.issue-permalink:hover {
+    opacity: 1;
+}
+
+@media (hover: none) {
+    .issue-permalink {
+        opacity: .5;
+    }
+}
+
+.issue {
+    scroll-margin-top: 1rem;
+}
+
+.issue.is-highlighted {
+    box-shadow: 0 0 0 3px var(--ao-teal);
+    transition: box-shadow .3s ease;
+}
+
+/* ---------- Updates timeline ---------- */
+
+.issue-section-title {
+    font-size     : .85rem;
+    font-weight   : 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color         : var(--bs-secondary-color);
+    margin        : 0 0 .5rem;
+}
+
+.issue-updates {
+    list-style   : none;
+    padding      : 0 0 0 1rem;
+    margin       : 0 0 1.25rem;
+    border-left  : 2px solid var(--ao-border);
+}
+
+.issue-update {
+    position     : relative;
+    margin-bottom: .75rem;
+}
+
+.issue-update::before {
+    content      : '';
+    position     : absolute;
+    left         : calc(-1rem - 6px);
+    top          : .35rem;
+    width        : 10px;
+    height       : 10px;
+    border-radius: 50%;
+    background   : var(--status-bg);
+}
+
+.issue-update time {
+    display    : block;
+    font-size  : .85rem;
+    font-weight: 600;
+    color      : var(--bs-secondary-color);
+}
+
+.issue-update > div > :last-child {
+    margin-bottom: 0;
+}
+
+/* ---------- Availability ---------- */
+
+.availability-title {
+    display        : flex;
+    justify-content: space-between;
+    align-items    : center;
+    gap            : 1rem;
+    padding        : .85rem 1.25rem;
+    cursor         : pointer;
+    font-weight    : 600;
+}
+
+.availability-summary {
+    font-weight: 400;
+    font-size  : .9rem;
+    color      : var(--bs-secondary-color);
+    margin-left: auto;
+}
+
+.availability-list {
+    list-style: none;
+    padding   : 0;
+    margin    : 0 0 1rem;
+}
+
+.availability-row {
+    margin-bottom: .85rem;
+}
+
+.availability-header {
+    display        : flex;
+    justify-content: space-between;
+    font-size      : .9rem;
+    margin-bottom  : .25rem;
+}
+
+.availability-uptime {
+    color: var(--bs-secondary-color);
+}
+
+.availability-bars {
+    display: flex;
+    gap    : 1px;
+    height : 1.5rem;
+}
+
+.availability-bar {
+    flex         : 1;
+    border-radius: 1px;
+    background   : var(--status-bg);
+}
+
+.availability-bar:hover {
+    opacity: .7;
 }

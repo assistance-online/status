@@ -3,9 +3,8 @@
 // Uses GITHUB_TOKEN when set; without it the unauthenticated API limit (60 requests/hour) applies.
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
-import { marked } from 'marked';
+import { buildFeed, createRenderer, getTeamLogins, isPublishedIssue, toIncidents, toPublicIssue } from './lib.mjs';
 
 const REPOSITORY = process.env.GITHUB_REPOSITORY ?? 'assistance-online/status';
 const API = `https://api.github.com/repos/${REPOSITORY}`;
@@ -13,12 +12,10 @@ const SITE_URL = 'https://status.assistanceonline.nl/';
 const PAGE_SIZE = 100;
 const HISTORY_SIZE = 50;
 const FEED_SIZE = 30;
-const MAX_IMAGE_HEIGHT = 400;
+const AVAILABILITY_DAYS = 90;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const outputDirectory = process.argv[2] ?? '.';
-
-const { window } = new JSDOM('');
-const DOMPurify = createDOMPurify(window);
 
 async function get(path) {
     const headers = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
@@ -44,113 +41,57 @@ async function getAllPages(path) {
     }
 }
 
-// Anyone can open an issue on the public repository, but only collaborators can set a milestone,
-// so issues without a milestone are never published.
-function isPublishedIssue(issue) {
-    return !issue.pull_request && !!issue.milestone;
-}
-
-// GitHub stores pasted screenshots as <img width height> at their full size; scale them down to fit
-// MAX_IMAGE_HEIGHT while keeping the aspect ratio, and link to the full-size image.
-function fitImages(container) {
-    container.querySelectorAll('img').forEach(image => {
-        const width = Number(image.getAttribute('width'));
-        const height = Number(image.getAttribute('height'));
-        image.removeAttribute('width');
-        image.removeAttribute('height');
-        image.setAttribute('loading', 'lazy');
-        image.setAttribute('class', 'issue-image');
-
-        if (width > 0 && height > 0) {
-            const displayWidth = Math.round(Math.min(width, MAX_IMAGE_HEIGHT * width / height));
-            image.setAttribute('style', `width: ${displayWidth}px; aspect-ratio: ${width} / ${height}`);
+// Closed issues, newest first, until there are enough for the history and they reach back past the
+// availability period (with a margin for incidents that were open for a while).
+async function getClosedIssues(availabilitySince) {
+    const fetchUntil = new Date(Date.parse(availabilitySince) - 30 * DAY_MS).toISOString();
+    const results = [];
+    for (let page = 1; ; page++) {
+        const items = await get(`issues?state=closed&sort=created&direction=desc&per_page=${PAGE_SIZE}&page=${page}`);
+        results.push(...items);
+        const published = results.filter(isPublishedIssue);
+        const oldest = items.at(-1)?.created_at;
+        if (items.length < PAGE_SIZE || (published.length >= HISTORY_SIZE && oldest < fetchUntil)) {
+            return results;
         }
-
-        if (!image.closest('a')) {
-            const link = container.ownerDocument.createElement('a');
-            link.setAttribute('href', image.getAttribute('src'));
-            image.replaceWith(link);
-            link.append(image);
-        }
-    });
+    }
 }
 
-function renderBody(markdown) {
-    const container = window.document.createElement('div');
-    container.innerHTML = DOMPurify.sanitize(marked.parse(markdown ?? '', { gfm: true, breaks: true }));
-    fitImages(container);
-    container.querySelectorAll('a[href]').forEach(link => {
-        link.setAttribute('target', '_blank');
-        link.setAttribute('rel', 'noopener');
-    });
-    return container.innerHTML;
+async function getComments(issue) {
+    return issue.comments > 0 ? getAllPages(`issues/${issue.number}/comments?`) : [];
 }
 
-function toPublicIssue(issue) {
-    return {
-        number: issue.number,
-        title: issue.title,
-        url: issue.html_url,
-        createdAt: issue.created_at,
-        updatedAt: issue.updated_at,
-        closedAt: issue.closed_at,
-        milestone: issue.milestone.title,
-        labels: issue.labels.map(label => label.name),
-        html: renderBody(issue.body)
-    };
-}
-
-function escapeXml(value) {
-    return String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;');
-}
-
-function buildFeed(status) {
-    const issues = [...status.openIssues, ...status.closedIssues]
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, FEED_SIZE);
-
-    const entries = issues.map(issue => `
-  <entry>
-    <id>${escapeXml(issue.url)}</id>
-    <title>${escapeXml(`${issue.closedAt ? '[Opgelost] ' : ''}${issue.title}`)}</title>
-    <link href="${escapeXml(issue.url)}"/>
-    <published>${issue.createdAt}</published>
-    <updated>${issue.updatedAt}</updated>
-    ${issue.labels.map(label => `<category term="${escapeXml(label)}"/>`).join('')}
-    <content type="html">${escapeXml(issue.html)}</content>
-  </entry>`).join('');
-
-    return `<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="nl">
-  <id>${SITE_URL}</id>
-  <title>Assistance Online - Status</title>
-  <link href="${SITE_URL}"/>
-  <link rel="self" href="${SITE_URL}feed.xml"/>
-  <updated>${status.generatedAt}</updated>
-  <author><name>Assistance Online</name></author>${entries}
-</feed>
-`;
-}
+const now = new Date();
+const availabilitySince = new Date(now.getTime() - AVAILABILITY_DAYS * DAY_MS).toISOString();
 
 const [labels, openIssues, closedIssues] = await Promise.all([
     getAllPages('labels?'),
     getAllPages('issues?state=open'),
-    get(`issues?state=closed&per_page=${PAGE_SIZE}`)
+    getClosedIssues(availabilitySince)
 ]);
 
+const teamLogins = getTeamLogins([...openIssues, ...closedIssues]);
+const renderMarkdown = createRenderer(new JSDOM('').window);
+
+async function publish(issues) {
+    return Promise.all(issues.map(async issue =>
+        toPublicIssue(issue, await getComments(issue), teamLogins, renderMarkdown)));
+}
+
 const status = {
-    generatedAt: new Date().toISOString(),
+    generatedAt: now.toISOString(),
     labels: labels.map(label => label.name),
-    openIssues: openIssues.filter(isPublishedIssue).map(toPublicIssue),
-    closedIssues: closedIssues.filter(isPublishedIssue).slice(0, HISTORY_SIZE).map(toPublicIssue)
+    openIssues: await publish(openIssues.filter(isPublishedIssue)),
+    closedIssues: await publish(closedIssues.filter(isPublishedIssue).slice(0, HISTORY_SIZE)),
+    availability: {
+        since: availabilitySince,
+        incidents: toIncidents([...openIssues, ...closedIssues], availabilitySince)
+    }
 };
 
 await mkdir(outputDirectory, { recursive: true });
 await writeFile(join(outputDirectory, 'status.json'), JSON.stringify(status));
-await writeFile(join(outputDirectory, 'feed.xml'), buildFeed(status));
+await writeFile(join(outputDirectory, 'feed.xml'), buildFeed(status, SITE_URL, FEED_SIZE));
 console.log(`Wrote status.json and feed.xml to ${outputDirectory}: ${status.labels.length} labels, `
-    + `${status.openIssues.length} open, ${status.closedIssues.length} closed issues`);
+    + `${status.openIssues.length} open, ${status.closedIssues.length} closed issues, `
+    + `${status.availability.incidents.length} incidents since ${availabilitySince.slice(0, 10)}`);

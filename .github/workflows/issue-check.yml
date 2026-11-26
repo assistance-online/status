@@ -1,0 +1,42 @@
+name: Controle zichtbaarheid issue
+
+# Issues without a milestone (or without a label) are not shown on the status page. This places a
+# reminder on such an issue and removes it again once milestone and label are set.
+on:
+  issues:
+    types: [opened, edited, reopened, milestoned, demilestoned, labeled, unlabeled]
+
+permissions:
+  issues: write
+
+concurrency:
+  group: issue-check-${{ github.event.issue.number }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: github.event.issue.state == 'open'
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const marker = '<!-- statuspagina-controle -->';
+            const issue = context.payload.issue;
+            const missing = [];
+            if (!issue.milestone) missing.push('een **milestone** (XL, L, M, S, Under investigation, Maintenance of Announcement)');
+            if (issue.labels.length === 0) missing.push('minimaal één **label** voor het getroffen onderdeel');
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo, issue_number: issue.number, per_page: 100
+            });
+            const reminder = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes(marker));
+
+            if (missing.length > 0 && !reminder) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: issue.number,
+                body: `${marker}\n:warning: Dit issue staat **niet** op de statuspagina. Het mist nog ${missing.join(' en ')}.\n\nDeze melding verdwijnt vanzelf zodra dat is aangevuld.`
+              });
+            } else if (missing.length === 0 && reminder) {
+              await github.rest.issues.deleteComment({ ...context.repo, comment_id: reminder.id });
+            }

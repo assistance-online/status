@@ -6,9 +6,10 @@ Automatische statuspagina voor Assistance Online op [status.assistanceonline.nl]
 
 De statuspagina is een statische site op GitHub Pages. De browser roept de GitHub API niet zelf aan, maar leest `status.json`.
 
-1. Bij elke wijziging aan een issue, label of milestone start de workflow [`Statuspagina publiceren`](.github/workflows/deploy.yml). Hij start ook bij een push naar `master`, één keer per uur als vangnet en handmatig via **Actions → Statuspagina publiceren → Run workflow**.
-2. Het script [`build-status.mjs`](.github/scripts/build-status.mjs) haalt de labels en issues op. Het zet de markdown om naar veilige HTML en schrijft `status.json` en de RSS-feed `feed.xml`.
-3. De workflow publiceert de site samen met die twee bestanden op GitHub Pages.
+1. Bij elke wijziging aan een issue, reactie, label of milestone start de workflow [`Statuspagina publiceren`](.github/workflows/deploy.yml). Hij start ook bij een push naar `master`, één keer per uur als vangnet en handmatig via **Actions → Statuspagina publiceren → Run workflow**.
+2. De workflow draait eerst de tests. Faalt een test, dan blijft de huidige pagina staan.
+3. Het script [`build-status.mjs`](.github/scripts/build-status.mjs) haalt de labels, issues en reacties op. Het zet de markdown om naar veilige HTML, berekent de storingen van de afgelopen 90 dagen en schrijft `status.json` en de RSS-feed `feed.xml`.
+4. De workflow publiceert de site samen met die twee bestanden op GitHub Pages.
 
 Een wijziging staat na ongeveer een minuut op de pagina. Een geopende pagina haalt elke minuut zelf de nieuwste status op, dus verversen is niet nodig. Staat een wijziging er niet, kijk dan bij **Actions** of de laatste run gelukt is.
 
@@ -20,14 +21,24 @@ Bij **Settings → Pages** moet de bron op **GitHub Actions** staan, niet op "De
 
 Een issue heeft een titel, een milestone en minimaal één label nodig.
 
-- **Zonder milestone wordt een issue niet getoond.** Iedereen met een GitHub-account kan een issue aanmaken in deze publieke repository, maar alleen collaborators kunnen een milestone zetten. Zo komt er niets op de pagina wat niet door ons is geplaatst.
+- **Zonder milestone wordt een issue niet getoond.** Iedereen met een GitHub-account kan een issue aanmaken in deze publieke repository, maar alleen collaborators kunnen een milestone zetten. Zo komt er niets op de pagina wat niet door ons is geplaatst. Mist een open issue een milestone of label, dan plaatst de workflow [`Controle zichtbaarheid issue`](.github/workflows/issue-check.yml) er een waarschuwing bij. Die verdwijnt vanzelf als het is aangevuld.
+- **Updates plaats je als reactie op het issue**, niet door de beschrijving aan te passen. Reacties verschijnen met tijdstip als tijdlijn boven de oorspronkelijke melding, en bij open meldingen staat het tijdstip van de laatste update. Alleen reacties van teamleden worden getoond: mensen die zelf een gepubliceerd issue hebben aangemaakt. Een nieuwe collega verschijnt dus pas met reacties nadat die een eerste issue heeft geplaatst.
 - Open issues met milestone `Announcement` staan onder **Gepland**. Ze tellen niet mee voor de status van de onderdelen of de algemene status.
 - Alle andere open issues staan onder **Actueel** en bepalen de status van de onderdelen.
 - Gesloten issues staan onder **Geschiedenis**, per maand gegroepeerd, met het tijdstip van oplossen en de duur. Daar staan alleen de laatste 50. Lange meldingen zijn ingeklapt met een knop **Lees meer**.
 - Bezoekers kunnen op een onderdeel klikken om alleen de meldingen daarvan te zien. Zo'n gefilterde weergave is te delen via de link, bijvoorbeeld `status.assistanceonline.nl/#onderdeel=AO%20api`.
+- Elke melding heeft een directe link (het linkicoon rechtsboven op de kaart), bijvoorbeeld `status.assistanceonline.nl/#issue-384`. De RSS-feed linkt daar ook naar.
 - De tekst is markdown. Geplakte afbeeldingen worden automatisch verkleind tot maximaal 400px hoog, en een klik opent ze op ware grootte.
 
-Voor de aankondiging van een release is er een issue-template: **New issue → Release aankondiging**.
+Er zijn twee issue-templates: **New issue → Storing** en **New issue → Release aankondiging**.
+
+## Beschikbaarheid
+
+Onder de onderdelen staat per onderdeel de beschikbaarheid over de afgelopen 90 dagen: een balkje per dag in de kleur van de zwaarste storing op die dag, en een percentage. Het percentage telt alleen de tijd waarin een storing `XL` of `L` open stond; `M` en `S` zijn wel zichtbaar in de balkjes. Onderhoud en aankondigingen tellen niet mee. Het klopt dus alleen als storingen consequent met de juiste labels worden vastgelegd en op tijd worden gesloten.
+
+## Taal
+
+Bezoekers kunnen rechtsboven wisselen tussen Nederlands en Engels. Dat vertaalt de vaste teksten van beide pagina's; de inhoud van de issues blijft Nederlands. Nieuwe vaste teksten voeg je toe in [`scripts/i18n.js`](scripts/i18n.js), in beide talen.
 
 ## Milestones
 
@@ -73,8 +84,17 @@ Een gesloten issue komt in de geschiedenis te staan. Zo blijft er een overzicht 
 
 ```sh
 npm ci --prefix .github/scripts
+npm test --prefix .github/scripts
 node .github/scripts/build-status.mjs .
 npx http-server -p 8080 -c-
 ```
 
 Open daarna http://localhost:8080. Het script werkt zonder token, maar dan geldt de limiet van 60 GitHub API-requests per uur. Zet `GITHUB_TOKEN` als je vaker wilt draaien. `status.json` en `feed.xml` staan in `.gitignore`.
+
+De tests in [`.github/scripts/test`](.github/scripts/test) controleren de buildfuncties (opschonen van HTML, afbeeldingen, reacties, feed) en draaien de pagina zelf in een gesimuleerde browser tegen vaste testdata.
+
+# Onderhoud
+
+[Dependabot](.github/dependabot.yml) stelt wekelijks een PR voor als er een nieuwe versie is van de build-afhankelijkheden of van de GitHub Actions. Nieuwe versies worden pas na twee weken voorgesteld. De bibliotheken die de pagina zelf via een CDN laadt (Bootstrap en Font Awesome in `index.html` en `contact.html`) vallen daar niet onder; die werk je met de hand bij, inclusief de `integrity`-hash.
+
+Beide pagina's hebben een Content-Security-Policy in een `<meta>`-tag. Laad je een script, stylesheet of font van een nieuwe bron, voeg die bron dan daar toe.

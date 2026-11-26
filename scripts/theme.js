@@ -31,7 +31,7 @@
             return;
         }
         const dark = currentTheme() === 'dark';
-        const label = dark ? 'Lichte modus' : 'Donkere modus';
+        const label = window.i18n.t(dark ? 'theme.toLight' : 'theme.toDark');
         toggle.querySelector('i').className = `fas ${dark ? 'fa-sun' : 'fa-moon'}`;
         toggle.setAttribute('aria-label', label);
         toggle.title = label;
@@ -50,6 +50,8 @@
             applyTheme(darkScheme.matches ? 'dark' : 'light');
         }
     });
+
+    window.i18n.onChange(updateToggle);
 
     document.addEventListener('DOMContentLoaded', () => {
         updateToggle();
