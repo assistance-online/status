@@ -103,7 +103,7 @@ describe('status page', () => {
     it('shows the most severe current incident as overall status', async () => {
         const document = await load();
         assert.match(document.getElementById('system-status').className, /status-xl/);
-        assert.equal(text(document, '#system-status .card-title'), 'Ernstige verstoring geconstateerd');
+        assert.equal(text(document, '#system-status .hero-title'), 'Ernstige verstoring geconstateerd');
         const favicon = decodeURIComponent(document.getElementById('favicon').href);
         assert.match(favicon, /^data:image\/svg\+xml,<svg/);
         assert.match(favicon, /<circle cx="154" cy="77" r="25" fill="#d51c00"/);
@@ -131,12 +131,12 @@ describe('status page', () => {
 
     it('renders the history in batches with month headers', async () => {
         const document = await load();
-        assert.equal(document.querySelectorAll('#history-issues .issue').length, 10);
+        assert.equal(document.querySelectorAll('#history-issues .history-item').length, 10);
         assert.ok(document.querySelectorAll('#history-issues .history-month').length >= 1);
 
         scrollToHistoryEnd(document);
         scrollToHistoryEnd(document);
-        assert.equal(document.querySelectorAll('#history-issues .issue').length, 25);
+        assert.equal(document.querySelectorAll('#history-issues .history-item').length, 25);
         assert.equal(document.getElementById('history-sentinel').hidden, true);
     });
 
@@ -149,7 +149,7 @@ describe('status page', () => {
         const document = await load({ hash: '#onderdeel=Integratie%20SOS' });
         assert.equal(document.getElementById('filter-info').hidden, false);
         assert.equal(text(document, '#current-count'), '0');
-        assert.equal(document.querySelectorAll('#history-issues .issue').length, 0);
+        assert.equal(document.querySelectorAll('#history-issues .history-item').length, 0);
 
         document.getElementById('filter-clear').click();
         assert.equal(document.getElementById('filter-info').hidden, true);
@@ -161,11 +161,12 @@ describe('status page', () => {
         const card = document.getElementById('issue-24');
         assert.ok(card);
         assert.match(card.className, /is-highlighted/);
+        assert.equal(card.open, true);
     });
 
     it('computes availability per component over 90 days', async () => {
         const document = await load();
-        const rows = [...document.querySelectorAll('.availability-row')];
+        const rows = [...document.querySelectorAll('.component')];
         assert.equal(rows.length, 2);
         assert.equal(rows[0].querySelectorAll('.availability-bar').length, 90);
         assert.ok(rows[0].querySelector('.availability-bar.status-xl'));
@@ -178,7 +179,7 @@ describe('status page', () => {
         document.getElementById('language-toggle').click();
         assert.equal(document.documentElement.lang, 'en');
         assert.equal(text(document, '[data-i18n="section.history"]'), 'History');
-        assert.equal(text(document, '#system-status .card-title'), 'Major outage detected');
+        assert.equal(text(document, '#system-status .hero-title'), 'Major outage detected');
         assert.equal(text(document, '#language-toggle'), 'NL');
         assert.equal(dom.window.localStorage.getItem('ao-status-language'), 'en');
     });
@@ -191,10 +192,10 @@ describe('status page', () => {
 
     it('does not re-render when an auto-refresh returns the same data', async () => {
         const document = await load();
-        const firstCard = document.querySelector('#history-issues .issue');
+        const firstCard = document.querySelector('#history-issues .history-item');
         await dom.window.eval('loadStatus()');
         assert.equal(fetchCount, 2);
-        assert.equal(document.querySelector('#history-issues .issue'), firstCard);
+        assert.equal(document.querySelector('#history-issues .history-item'), firstCard);
     });
 });
 
@@ -230,7 +231,7 @@ describe('status page scheduling, analysis and search', () => {
             status.openIssues.splice(0, 1);
             Object.assign(status.openIssues[0], { startAt: isoDaysAgo(0.01), endAt: isoDaysAgo(-0.01) });
         }) });
-        assert.equal(text(document, '#system-status .card-title'), 'Systeem is in onderhoud');
+        assert.equal(text(document, '#system-status .hero-title'), 'Systeem is in onderhoud');
         assert.equal(document.getElementById('planned-section').hidden, true);
         assert.ok(document.querySelector('#current-issues #issue-1001'));
         assert.match(text(document, '#issue-1001 .issue-dates'), /^Onderhoud tot /);
@@ -261,7 +262,7 @@ describe('status page scheduling, analysis and search', () => {
         input.value = 'ao-12308';
         input.dispatchEvent(new dom.window.Event('input'));
         await new Promise(resolve => setTimeout(resolve, 250));
-        assert.equal(document.querySelectorAll('#history-issues .issue').length, 1);
+        assert.equal(document.querySelectorAll('#history-issues .history-item').length, 1);
 
         input.value = 'bestaat niet';
         input.dispatchEvent(new dom.window.Event('input'));
@@ -278,5 +279,56 @@ describe('favicon', () => {
         status.openIssues = [];
         const document = await load({ status });
         assert.match(document.getElementById('favicon').href, /images\/favicon\.svg$/);
+    });
+});
+
+describe('status banner and component groups', () => {
+    afterEach(() => dom?.window.close());
+
+    it('names the affected components in the status banner', async () => {
+        const document = await load();
+        assert.equal(text(document, '#system-status .hero-detail'), 'Getroffen: AO api');
+        assert.match(document.getElementById('system-status').className, /is-active/);
+    });
+
+    it('opens a group with a problem and keeps healthy groups closed', async () => {
+        const document = await load();
+        const ao = document.querySelector('[data-group="ao"]');
+        const integrations = document.querySelector('[data-group="integrations"]');
+        assert.equal(ao.open, true);
+        assert.equal(text(ao, '.group-summary'), '1 van 1 getroffen');
+        assert.equal(integrations.open, false);
+        assert.equal(text(integrations, '.group-summary'), 'Alles online (1)');
+    });
+
+    it('keeps a group the visitor opened open after a refresh with new data', async () => {
+        const status = createStatus();
+        const document = await load({ status });
+        const integrations = document.querySelector('[data-group="integrations"]');
+        integrations.open = true;
+        integrations.dispatchEvent(new dom.window.Event('toggle'));
+
+        status.generatedAt = new Date(now + 1000).toISOString();
+        status.openIssues[0].title = 'Gewijzigd';
+        await dom.window.eval('loadStatus()');
+        assert.equal(document.querySelector('[data-group="integrations"]').open, true);
+    });
+
+    it('shows a friendly empty state without current reports', async () => {
+        const status = createStatus();
+        status.openIssues = [];
+        const document = await load({ status });
+        assert.equal(text(document, '#system-status .hero-title'), 'Alle systemen werken naar behoren');
+        assert.equal(document.getElementById('current-count-wrap').hidden, true);
+        assert.equal(text(document, '#current-issues .empty-state'), 'Geen actuele meldingen. Alles werkt naar behoren.');
+    });
+
+    it('shows history items as compact lines that open on demand', async () => {
+        const document = await load();
+        const item = document.querySelector('#history-issues .history-item');
+        assert.equal(item.tagName, 'DETAILS');
+        assert.equal(item.open, false);
+        assert.ok(item.querySelector('summary .history-title'));
+        assert.ok(item.querySelector('.history-details .github-link'));
     });
 });

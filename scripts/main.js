@@ -28,7 +28,7 @@ const STATUS_URL = 'status.json';
 const FAVICON_URL = 'images/favicon.svg';
 const REFRESH_INTERVAL_MS = 60 * 1000;
 const HISTORY_BATCH_SIZE = 10;
-const COLLAPSED_BODY_HEIGHT = 240;
+const BACK_TO_TOP_AFTER_PX = 1200;
 const AVAILABILITY_DAYS = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FILTER_HASH_PREFIX = '#onderdeel=';
@@ -37,6 +37,13 @@ const ISSUE_HASH_PATTERN = /^#issue-(\d+)$/;
 const STALE_AFTER_MS = 3 * 60 * 60 * 1000;
 const SEARCH_DEBOUNCE_MS = 200;
 
+// Components are grouped by the prefix of their label; anything else ends up in the last group.
+const COMPONENT_GROUPS = [
+    { key: 'ao', match: name => name.startsWith('AO ') },
+    { key: 'integrations', match: name => name.startsWith('Integratie ') },
+    { key: 'other', match: () => true }
+];
+
 const { t } = window.i18n;
 
 const state = {
@@ -44,6 +51,7 @@ const state = {
     filter: null,
     search: '',
     searchTexts: new Map(),
+    openGroups: new Set(),
     lastLoaded: 0,
     renderedSections: {},
     historyIssues: [],
@@ -351,12 +359,17 @@ function buildAvailability() {
 
 // ---------- Rendering ----------
 
-function renderSystemStatusCard(statusKey, iconClass, text) {
-    const card = document.getElementById('system-status');
-    card.className = `card status-card mb-2 status-${statusKey}`;
-    card.innerHTML = `
-        <div class="status-card-icon"><i class="fas ${iconClass} fa-lg" aria-hidden="true"></i></div>
-        <h5 class="card-title mb-0">${escapeHtml(text)}</h5>`;
+function renderSystemStatusCard(statusKey, iconClass, text, detail = '') {
+    const hero = document.getElementById('system-status');
+    const active = !['online', 'unknown'].includes(statusKey);
+    hero.className = `hero status-${statusKey}${active ? ' is-active' : ''}`;
+    hero.innerHTML = `
+        <div class="hero-icon"><i class="fas ${iconClass}" aria-hidden="true"></i></div>
+        <div class="hero-text">
+            <h1 class="hero-title">${escapeHtml(text)}</h1>
+            ${detail ? `<p class="hero-detail">${escapeHtml(detail)}</p>` : ''}
+            <p class="hero-meta">${escapeHtml(t('meta.lastUpdated'))} <span id="last-updated">-</span></p>
+        </div>`;
 }
 
 let faviconBase;
@@ -385,12 +398,17 @@ async function renderFavicon(status) {
 
 function renderSystemStatus() {
     const status = getStatusOfMilestones(getCurrentIssues().map(getEffectiveMilestone));
-    renderSystemStatusCard(getStatusKey(status), getStatusIcon(status), getSystemStatusText(status));
+    const affected = buildComponents().filter(component => component.status !== StatusEnum.Online).map(component => component.name);
+    const detail = affected.length > 0 ? t('status.affected', { components: affected.join(', ') }) : '';
+    renderSystemStatusCard(getStatusKey(status), getStatusIcon(status), getSystemStatusText(status), detail);
     renderFavicon(status);
 }
 
 function renderLastUpdated() {
-    document.getElementById('last-updated').textContent = formatDateTime(state.status.generatedAt);
+    const element = document.getElementById('last-updated');
+    if (element) {
+        element.textContent = formatDateTime(state.status.generatedAt);
+    }
 }
 
 function renderStaleWarning() {
@@ -408,44 +426,62 @@ function updateCountdowns() {
     });
 }
 
-function renderComponents() {
-    document.getElementById('status-items').innerHTML = buildComponents().map(component => {
-        const key = getStatusKey(component.status);
-        const selected = state.filter === component.name;
-
-        return `
-            <button type="button" class="list-group-item list-group-item-action component status-${key}${selected ? ' is-selected' : ''}"
-                data-component="${escapeHtml(component.name)}" aria-pressed="${selected}"
-                title="${escapeHtml(t(selected ? 'component.clearFilter' : 'component.filter'))}">
-                <span>
-                    <i class="fas ${getStatusIcon(component.status)} status-icon me-2" aria-hidden="true"></i>
-                    ${escapeHtml(component.name)}
-                </span>
-                <span class="status-text">${escapeHtml(getStatusDescription(component.status))}</span>
-            </button>`;
-    }).join('');
+function getGroupKey(componentName) {
+    return COMPONENT_GROUPS.find(group => group.match(componentName)).key;
 }
 
-function renderAvailability() {
-    const components = buildAvailability();
-    const total = state.status.availability?.incidents.length ?? 0;
-    document.getElementById('availability-summary').textContent =
-        total === 0 ? t('availability.none') : t(total === 1 ? 'availability.countOne' : 'availability.countMany', { count: total });
+function renderComponent(component, availability) {
+    const key = getStatusKey(component.status);
+    const selected = state.filter === component.name;
+    const bars = availability.bars.map(bar => {
+        const title = `${formatDate(bar.day.start)}: ${bar.titles.length > 0 ? bar.titles.join(', ') : t('availability.none')}`;
+        return `<span class="availability-bar status-${getStatusKey(bar.status)}" title="${escapeHtml(title)}"></span>`;
+    }).join('');
 
-    document.getElementById('availability-list').innerHTML = components.map(component => {
-        const bars = component.bars.map(bar => {
-            const title = `${formatDate(bar.day.start)}: ${bar.titles.length > 0 ? bar.titles.join(', ') : t('availability.none')}`;
-            return `<span class="availability-bar status-${getStatusKey(bar.status)}" title="${escapeHtml(title)}"></span>`;
-        }).join('');
+    return `
+        <button type="button" class="component status-${key}${selected ? ' is-selected' : ''}"
+            data-component="${escapeHtml(component.name)}" aria-pressed="${selected}"
+            title="${escapeHtml(t(selected ? 'component.clearFilter' : 'component.filter'))}">
+            <span class="component-line">
+                <i class="fas ${getStatusIcon(component.status)} status-icon" aria-hidden="true"></i>
+                <span class="component-name">${escapeHtml(component.name)}</span>
+                <span class="availability-uptime">${escapeHtml(t('availability.uptime', { percentage: formatPercentage(availability.uptime) }))}</span>
+                <span class="status-text">${escapeHtml(getStatusDescription(component.status))}</span>
+            </span>
+            <span class="availability-bars" aria-hidden="true">${bars}</span>
+        </button>`;
+}
+
+function renderComponents() {
+    const components = buildComponents();
+    const availability = new Map(buildAvailability().map(item => [item.name, item]));
+
+    document.getElementById('status-items').innerHTML = COMPONENT_GROUPS.map(group => {
+        const members = components.filter(component => getGroupKey(component.name) === group.key);
+        if (members.length === 0) {
+            return '';
+        }
+
+        const affected = members.filter(component => component.status !== StatusEnum.Online);
+        const groupStatus = affected.length === 0
+            ? StatusEnum.Online
+            : STATUS_PRIORITY.find(status => affected.some(component => component.status === status)) ?? affected[0].status;
+        const open = affected.length > 0 || state.openGroups.has(group.key) || members.some(component => component.name === state.filter);
+        const summary = affected.length === 0
+            ? t('group.allOnline', { count: members.length })
+            : t('group.affected', { count: affected.length, total: members.length });
 
         return `
-            <li class="availability-row">
-                <div class="availability-header">
-                    <span>${escapeHtml(component.name)}</span>
-                    <span class="availability-uptime">${escapeHtml(t('availability.uptime', { percentage: formatPercentage(component.uptime) }))}</span>
-                </div>
-                <div class="availability-bars" aria-hidden="true">${bars}</div>
-            </li>`;
+            <details class="card group status-${getStatusKey(groupStatus)}" data-group="${group.key}"${open ? ' open' : ''}>
+                <summary>
+                    <i class="fas ${groupStatus === StatusEnum.Online ? 'fa-check-circle' : getStatusIcon(groupStatus)} status-icon" aria-hidden="true"></i>
+                    <span class="group-name">${escapeHtml(t(`group.${group.key}`))}</span>
+                    <span class="group-summary">${escapeHtml(summary)}</span>
+                    <i class="fas fa-chevron-down group-chevron" aria-hidden="true"></i>
+                </summary>
+                ${members.map(component => renderComponent(component, availability.get(component.name))).join('')}
+                <div class="availability-legend"><span>${escapeHtml(t('availability.start'))}</span><span>${escapeHtml(t('availability.today'))}</span></div>
+            </details>`;
     }).join('');
 }
 
@@ -508,60 +544,89 @@ function renderAnalysis(issue) {
         : '';
 }
 
-function renderIssue(issue, { collapsible }) {
-    const status = getIssueStatus(issue);
+function renderLabels(issue) {
+    return issue.labels.map(label => `<span class="badge label-badge">${escapeHtml(label)}</span>`).join(' ');
+}
+
+function renderIssueLinks(issue) {
+    return `
+        <a class="issue-permalink" href="#issue-${issue.number}"><i class="fas fa-link" aria-hidden="true"></i> ${escapeHtml(t('issue.permalink'))}</a>
+        <a class="github-link" href="${escapeHtml(issue.url)}" target="_blank" rel="noopener">${escapeHtml(t('issue.github'))} <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>`;
+}
+
+function renderIssueMeta(issue, status) {
     const meta = getIssueMeta(issue, status).map(escapeHtml);
     const upcoming = !issue.closedAt && status === StatusEnum.Announcement && issue.startAt && Date.parse(issue.startAt) > Date.now();
     if (upcoming) {
         meta.push(`<span class="countdown" data-starts-at="${escapeHtml(issue.startAt)}"></span>`);
     }
+    return meta.join(' &middot; ');
+}
 
-    const labels = issue.labels
-        .map(label => `<span class="badge label-badge">${escapeHtml(label)}</span>`)
-        .join(' ');
+// Planned and current issues: always fully visible.
+function renderIssue(issue) {
+    const status = getIssueStatus(issue);
 
     // issue.html is rendered and sanitized by the build script.
     return `
         <article class="card issue status-${getStatusKey(status)}" id="issue-${issue.number}">
             <div class="card-body">
-                <div class="issue-heading">
-                    <h2 class="issue-title">
-                        <a target="_blank" rel="noopener" href="${escapeHtml(issue.url)}">
-                            <i class="fas ${getStatusIcon(status)} status-icon me-2" aria-hidden="true"></i>${escapeHtml(issue.title)}
-                        </a>
-                    </h2>
-                    <a class="issue-permalink" href="#issue-${issue.number}" title="${escapeHtml(t('issue.permalink'))}"
-                        aria-label="${escapeHtml(t('issue.permalink'))}"><i class="fas fa-link" aria-hidden="true"></i></a>
-                </div>
+                <h3 class="issue-title">
+                    <i class="fas ${getStatusIcon(status)} status-icon me-2" aria-hidden="true"></i>${escapeHtml(issue.title)}
+                </h3>
                 <div class="issue-meta">
                     <span class="badge status-badge">${escapeHtml(getStatusDescription(status))}</span>
-                    ${labels}
-                    <div class="issue-dates">${meta.join(' &middot; ')}</div>
+                    ${renderLabels(issue)}
+                    <div class="issue-dates">${renderIssueMeta(issue, status)}</div>
                 </div>
-                <div class="issue-body${collapsible ? ' is-collapsible' : ''}">${renderAnalysis(issue)}${renderUpdates(issue)}${issue.html}</div>
-                ${collapsible ? `<button type="button" class="btn btn-link issue-toggle" aria-expanded="false" hidden>${escapeHtml(t('issue.readMore'))}</button>` : ''}
+                <div class="issue-body">${renderAnalysis(issue)}${renderUpdates(issue)}${issue.html}</div>
+                <div class="issue-links">${renderIssueLinks(issue)}</div>
             </div>
         </article>`;
 }
 
-function renderIssueList(sectionId, issues, emptyText) {
-    const list = document.getElementById(`${sectionId}-issues`);
-    list.innerHTML = issues.length > 0
-        ? issues.map(issue => renderIssue(issue, { collapsible: false })).join('')
-        : `<p class="empty-text">${escapeHtml(emptyText)}</p>`;
-    document.getElementById(`${sectionId}-count`).textContent = issues.length;
-    revealCards(list);
+// History: one compact line per issue that opens to show the details.
+function renderHistoryItem(issue) {
+    const status = getIssueStatus(issue);
+    return `
+        <details class="history-item status-${getStatusKey(status)}" id="issue-${issue.number}">
+            <summary>
+                <i class="fas ${getStatusIcon(status)} status-icon" aria-hidden="true"></i>
+                <span class="history-title">${escapeHtml(issue.title)}</span>
+                <span class="badge status-badge">${escapeHtml(getStatusDescription(status))}</span>
+                <span class="history-date">${escapeHtml(formatDate(issue.closedAt))}</span>
+                <i class="fas fa-chevron-down history-chevron" aria-hidden="true"></i>
+            </summary>
+            <div class="history-details">
+                <div class="issue-meta">
+                    ${renderLabels(issue)}
+                    <div class="issue-dates">${renderIssueMeta(issue, status)}</div>
+                </div>
+                <div class="issue-body">${renderAnalysis(issue)}${renderUpdates(issue)}${issue.html}</div>
+                <div class="issue-links">${renderIssueLinks(issue)}</div>
+            </div>
+        </details>`;
 }
 
 function renderPlanned() {
     const issues = state.status.openIssues.filter(issue => isAnnouncement(issue) && matchesFilter(issue));
+    const list = document.getElementById('planned-issues');
     document.getElementById('planned-section').hidden = issues.length === 0;
-    renderIssueList('planned', issues, '');
+    document.getElementById('planned-count').textContent = issues.length;
+    list.innerHTML = issues.map(renderIssue).join('');
+    revealCards(list);
 }
 
 function renderCurrent() {
-    renderIssueList('current', getCurrentIssues().filter(matchesFilter),
-        t(state.filter ? 'empty.currentFiltered' : 'empty.current'));
+    const issues = getCurrentIssues().filter(matchesFilter);
+    const list = document.getElementById('current-issues');
+    document.getElementById('current-count-wrap').hidden = issues.length === 0;
+    document.getElementById('current-count').textContent = issues.length;
+    list.innerHTML = issues.length > 0
+        ? issues.map(renderIssue).join('')
+        : `<div class="empty-state"><i class="fas fa-check-circle" aria-hidden="true"></i>
+               <span>${escapeHtml(t(state.filter ? 'empty.currentFiltered' : 'empty.current'))}</span></div>`;
+    revealCards(list);
 }
 
 function renderHistory() {
@@ -590,7 +655,7 @@ function renderNextHistoryBatch() {
         const month = formatMonth(issue.createdAt);
         const header = month !== state.historyLastMonth ? `<h3 class="history-month">${escapeHtml(month)}</h3>` : '';
         state.historyLastMonth = month;
-        return header + renderIssue(issue, { collapsible: true });
+        return header + renderHistoryItem(issue);
     }).join('');
 
     list.insertAdjacentHTML('beforeend', html);
@@ -606,11 +671,10 @@ function renderNextHistoryBatch() {
     }
 
     revealCards(list);
-    list.querySelectorAll('.issue-body.is-collapsible:not([data-checked])').forEach(setUpCollapse);
 }
 
 // Only re-render a section when its data changed, so an auto-refresh doesn't replay the fade-in
-// or collapse expanded issues.
+// or close opened issues.
 function renderSection(name, data, render) {
     const signature = JSON.stringify([data, state.filter, window.i18n.language]);
     if (state.renderedSections[name] !== signature) {
@@ -623,12 +687,11 @@ function render() {
     const { status } = state;
     // Effective milestones change when a scheduled maintenance window starts or ends.
     const openState = [status.openIssues, status.openIssues.map(getEffectiveMilestone)];
+    renderSection('system', [getCurrentIssues().map(getEffectiveMilestone), openState], renderSystemStatus);
     renderLastUpdated();
     renderStaleWarning();
     renderFilterInfo();
-    renderSection('system', getCurrentIssues().map(getEffectiveMilestone), renderSystemStatus);
-    renderSection('components', [status.labels, openState], renderComponents);
-    renderSection('availability', [status.labels, status.availability, new Date().toDateString()], renderAvailability);
+    renderSection('components', [status.labels, openState, status.availability, new Date().toDateString()], renderComponents);
     renderSection('planned', openState, renderPlanned);
     renderSection('current', openState, renderCurrent);
     renderSection('history', [status.closedIssues, state.search], renderHistory);
@@ -647,38 +710,13 @@ const revealObserver = new IntersectionObserver(entries => {
 }, { rootMargin: '0px 0px -40px 0px' });
 
 function revealCards(container) {
-    container.querySelectorAll('.issue:not(.is-visible)').forEach(card => {
+    container.querySelectorAll('.issue:not(.is-visible), .history-item:not(.is-visible)').forEach(card => {
         if (prefersReducedMotion.matches) {
             card.classList.add('is-visible');
         } else {
             revealObserver.observe(card);
         }
     });
-}
-
-function updateCollapse(body) {
-    const toggle = body.nextElementSibling;
-    if (body.classList.contains('is-expanded')) {
-        return;
-    }
-    const overflows = body.scrollHeight > COLLAPSED_BODY_HEIGHT + 40;
-    body.classList.toggle('is-collapsed', overflows);
-    toggle.hidden = !overflows;
-}
-
-function setUpCollapse(body) {
-    body.dataset.checked = 'true';
-    updateCollapse(body);
-    // Images without known dimensions only get their height once loaded.
-    body.addEventListener('load', () => updateCollapse(body), true);
-}
-
-function setExpanded(body, expanded) {
-    const toggle = body.nextElementSibling;
-    body.classList.toggle('is-expanded', expanded);
-    body.classList.toggle('is-collapsed', !expanded);
-    toggle.textContent = t(expanded ? 'issue.readLess' : 'issue.readMore');
-    toggle.setAttribute('aria-expanded', expanded);
 }
 
 const historyObserver = new IntersectionObserver(entries => {
@@ -724,15 +762,14 @@ function showLinkedIssue() {
         renderNextHistoryBatch();
     }
 
-    const card = document.getElementById(`issue-${number}`);
-    card.classList.add('is-visible', 'is-highlighted');
-    const body = card.querySelector('.issue-body.is-collapsed');
-    if (body) {
-        setExpanded(body, true);
+    const element = document.getElementById(`issue-${number}`);
+    element.classList.add('is-visible', 'is-highlighted');
+    if (element.tagName === 'DETAILS') {
+        element.open = true;
     }
-    // Bootstrap enables smooth scrolling, which stops short while lazily rendered cards change height.
-    card.scrollIntoView({ block: 'start', behavior: 'instant' });
-    setTimeout(() => card.classList.remove('is-highlighted'), 2500);
+    // Bootstrap enables smooth scrolling, which stops short while lazily rendered items change height.
+    element.scrollIntoView({ block: 'start', behavior: 'instant' });
+    setTimeout(() => element.classList.remove('is-highlighted'), 2500);
 }
 
 function handleHashChange() {
@@ -756,7 +793,8 @@ function setUpInteractions() {
         }, SEARCH_DEBOUNCE_MS);
     });
 
-    document.getElementById('status-items').addEventListener('click', event => {
+    const groups = document.getElementById('status-items');
+    groups.addEventListener('click', event => {
         const button = event.target.closest('[data-component]');
         if (button) {
             const name = button.dataset.component;
@@ -764,15 +802,25 @@ function setUpInteractions() {
         }
     });
 
+    // Remember which groups the visitor opened, so a re-render keeps them open. The toggle event doesn't bubble.
+    groups.addEventListener('toggle', event => {
+        const group = event.target.dataset?.group;
+        if (group) {
+            if (event.target.open) {
+                state.openGroups.add(group);
+            } else {
+                state.openGroups.delete(group);
+            }
+        }
+    }, true);
+
     document.getElementById('filter-clear').addEventListener('click', () => setFilter(null));
 
-    document.getElementById('history-issues').addEventListener('click', event => {
-        const toggle = event.target.closest('.issue-toggle');
-        if (toggle) {
-            const body = toggle.previousElementSibling;
-            setExpanded(body, !body.classList.contains('is-expanded'));
-        }
-    });
+    const backToTop = document.getElementById('back-to-top');
+    backToTop.addEventListener('click', () => window.scrollTo({ top: 0 }));
+    window.addEventListener('scroll', () => {
+        backToTop.hidden = window.scrollY < BACK_TO_TOP_AFTER_PX;
+    }, { passive: true });
 
     window.addEventListener('hashchange', handleHashChange);
 

@@ -225,27 +225,6 @@ nav.navbar img {
 
 /* ---------- Status ---------- */
 
-.status-card {
-    flex-direction: row;
-    align-items   : stretch;
-    overflow      : hidden;
-}
-
-.status-card-icon {
-    flex           : 0 0 4.5rem;
-    display        : flex;
-    align-items    : center;
-    justify-content: center;
-    min-height     : 3.75rem;
-    background     : var(--status-bg);
-    color          : var(--status-on);
-}
-
-.status-card .card-title {
-    align-self: center;
-    padding   : 1rem 1.25rem;
-}
-
 .page-meta {
     font-size : .9rem;
     color     : var(--bs-secondary-color);
@@ -254,18 +233,6 @@ nav.navbar img {
 
 .status-icon {
     color: var(--status-color);
-}
-
-.component {
-    display        : flex;
-    justify-content: space-between;
-    align-items    : center;
-}
-
-.component.is-selected {
-    background-color: var(--bs-secondary-bg);
-    box-shadow      : inset 4px 0 0 var(--ao-green);
-    font-weight     : 600;
 }
 
 .status-text {
@@ -309,19 +276,22 @@ nav.navbar img {
     margin-top: 0;
 }
 
-.issue {
+.issue,
+.history-item {
     opacity            : 0;
     transform          : translateY(12px);
     transition         : opacity .45s ease-out, transform .45s ease-out;
 }
 
-.issue.is-visible {
+.issue.is-visible,
+.history-item.is-visible {
     opacity  : 1;
     transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .issue {
+    .issue,
+    .history-item {
         opacity   : 1;
         transform : none;
         transition: none;
@@ -358,25 +328,6 @@ nav.navbar img {
 
 .issue-body > :last-child {
     margin-bottom: 0;
-}
-
-.issue-body.is-collapsed {
-    max-height        : 240px;
-    overflow          : hidden;
-    -webkit-mask-image: linear-gradient(to bottom, #000 65%, transparent);
-    mask-image        : linear-gradient(to bottom, #000 65%, transparent);
-}
-
-.issue-toggle {
-    padding    : 0;
-    margin-top : .5rem;
-    color          : var(--ao-link);
-    font-weight    : 600;
-    text-decoration: none;
-}
-
-.issue-toggle:hover {
-    color: var(--ao-link-hover);
 }
 
 .issue-image {
@@ -423,52 +374,21 @@ nav.navbar img {
         padding: 0 8px;
     }
 
-    .status-card-icon {
-        flex-basis: 3.5rem;
-    }
-
-    .issue-title {
-        font-size: 1.2rem;
+    nav.navbar img {
+        margin-left : 0;
+        padding-left: 0;
     }
 }
 
 /* ---------- Direct links ---------- */
 
-.issue-heading {
-    display        : flex;
-    align-items    : flex-start;
-    justify-content: space-between;
-    gap            : .75rem;
-}
-
-.issue-permalink {
-    flex      : none;
-    padding   : .25rem;
-    font-size : .9rem;
-    opacity   : 0;
-    transition: opacity .2s ease;
-}
-
-.issue:hover .issue-permalink,
-.issue-permalink:focus-visible {
-    opacity: .7;
-}
-
-.issue-permalink:hover {
-    opacity: 1;
-}
-
-@media (hover: none) {
-    .issue-permalink {
-        opacity: .5;
-    }
-}
-
-.issue {
+.issue,
+.history-item {
     scroll-margin-top: 1rem;
 }
 
-.issue.is-highlighted {
+.issue.is-highlighted,
+.history-item.is-highlighted {
     box-shadow: 0 0 0 3px var(--ao-teal);
     transition: box-shadow .3s ease;
 }
@@ -516,62 +436,6 @@ nav.navbar img {
 
 .issue-update > div > :last-child {
     margin-bottom: 0;
-}
-
-/* ---------- Availability ---------- */
-
-.availability-title {
-    display        : flex;
-    justify-content: space-between;
-    align-items    : center;
-    gap            : 1rem;
-    padding        : .85rem 1.25rem;
-    cursor         : pointer;
-    font-weight    : 600;
-}
-
-.availability-summary {
-    font-weight: 400;
-    font-size  : .9rem;
-    color      : var(--bs-secondary-color);
-    margin-left: auto;
-}
-
-.availability-list {
-    list-style: none;
-    padding   : 0;
-    margin    : 0 0 1rem;
-}
-
-.availability-row {
-    margin-bottom: .85rem;
-}
-
-.availability-header {
-    display        : flex;
-    justify-content: space-between;
-    font-size      : .9rem;
-    margin-bottom  : .25rem;
-}
-
-.availability-uptime {
-    color: var(--bs-secondary-color);
-}
-
-.availability-bars {
-    display: flex;
-    gap    : 1px;
-    height : 1.5rem;
-}
-
-.availability-bar {
-    flex         : 1;
-    border-radius: 1px;
-    background   : var(--status-bg);
-}
-
-.availability-bar:hover {
-    opacity: .7;
 }
 
 /* ---------- Stale data, search, schedule and analysis ---------- */
@@ -624,4 +488,376 @@ nav.navbar img {
 
 .issue-analysis > :last-child {
     margin-bottom: 0;
+}
+
+/* ---------- Status banner ---------- */
+
+.hero {
+    display      : flex;
+    align-items  : center;
+    gap          : 1.1rem;
+    padding      : 1.4rem 1.6rem;
+    margin-bottom: 1.5rem;
+    border-radius: .75rem;
+    background   : var(--status-bg);
+    color        : var(--status-on);
+    box-shadow   : 0 6px 20px rgba(0, 0, 0, .12);
+}
+
+.hero-icon {
+    flex         : none;
+    display      : grid;
+    place-items  : center;
+    width        : 3.25rem;
+    height       : 3.25rem;
+    border-radius: 50%;
+    font-size    : 1.5rem;
+    background   : rgba(255, 255, 255, .22);
+}
+
+.hero.is-active .hero-icon {
+    animation: hero-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hero-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, .45); }
+    50%      { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+}
+
+.hero-title {
+    margin     : 0;
+    font-size  : 1.6rem;
+    font-weight: 700;
+}
+
+.hero-detail,
+.hero-meta {
+    margin   : .2rem 0 0;
+    font-size: .95rem;
+    opacity  : .9;
+}
+
+.hero-detail {
+    font-weight: 600;
+}
+
+/* ---------- Component groups ---------- */
+
+.groups {
+    display      : grid;
+    gap          : .85rem;
+    margin-bottom: .5rem;
+}
+
+.group {
+    overflow: hidden;
+}
+
+.group > summary {
+    display    : flex;
+    align-items: center;
+    gap        : .75rem;
+    padding    : .9rem 1.25rem;
+    font-weight: 700;
+    cursor     : pointer;
+    list-style : none;
+}
+
+.group > summary::-webkit-details-marker,
+.history-item > summary::-webkit-details-marker {
+    display: none;
+}
+
+.group-summary {
+    margin-left: auto;
+    font-size  : .9rem;
+    font-weight: 600;
+    color      : var(--status-color);
+}
+
+.group-chevron,
+.history-chevron {
+    color     : var(--bs-secondary-color);
+    transition: transform .2s ease;
+}
+
+.group[open] .group-chevron,
+.history-item[open] .history-chevron {
+    transform: rotate(180deg);
+}
+
+.component {
+    display    : block;
+    width      : 100%;
+    padding    : .7rem 1.25rem;
+    border     : 0;
+    border-top : 1px solid var(--bs-border-color);
+    background : none;
+    color      : inherit;
+    text-align : left;
+}
+
+.component:hover {
+    background: var(--bs-tertiary-bg);
+}
+
+.component.is-selected {
+    background: var(--bs-secondary-bg);
+    box-shadow: inset 4px 0 0 var(--ao-green);
+}
+
+.component-line {
+    display    : flex;
+    align-items: center;
+    gap        : .6rem;
+}
+
+.component.is-selected .component-name {
+    font-weight: 700;
+}
+
+.status-text {
+    font-size  : .85rem;
+    font-weight: 700;
+    color      : var(--status-color);
+}
+
+.availability-uptime {
+    margin-left: auto;
+    font-size  : .8rem;
+    color      : var(--bs-secondary-color);
+}
+
+.availability-bars {
+    display   : flex;
+    gap       : 1px;
+    height    : .75rem;
+    margin-top: .45rem;
+}
+
+.availability-bar {
+    flex         : 1;
+    border-radius: 1px;
+    background   : var(--status-bg);
+    opacity      : .8;
+}
+
+.availability-bar:hover {
+    opacity: 1;
+}
+
+.availability-legend {
+    display        : flex;
+    justify-content: space-between;
+    padding        : .1rem 1.25rem .6rem;
+    font-size      : .75rem;
+    color          : var(--bs-secondary-color);
+}
+
+/* ---------- Sections ---------- */
+
+.section-title {
+    margin     : 2.25rem 0 .9rem;
+    font-size  : 1.35rem;
+    font-weight: 700;
+}
+
+.empty-state {
+    display      : flex;
+    align-items  : center;
+    gap          : .75rem;
+    padding      : 1rem 1.25rem;
+    border       : 1px dashed var(--bs-border-color);
+    border-radius: .5rem;
+    color        : var(--bs-secondary-color);
+}
+
+.empty-state i {
+    font-size: 1.25rem;
+    color    : var(--status-online);
+}
+
+.issue-title {
+    font-size: 1.3rem;
+}
+
+.issue-links {
+    display    : flex;
+    flex-wrap  : wrap;
+    gap        : .25rem 1.25rem;
+    margin-top : 1rem;
+    font-size  : .85rem;
+}
+
+/* Headings written inside issue text must not compete with the issue title. */
+.issue-body h1,
+.issue-body h2,
+.issue-body h3,
+.issue-body h4 {
+    margin     : 1rem 0 .3rem;
+    font-size  : 1rem;
+    font-weight: 700;
+}
+
+/* ---------- Compact history ---------- */
+
+.history-item {
+    margin-bottom: .5rem;
+    border       : 1px solid var(--bs-border-color);
+    border-left  : 4px solid var(--status-bg);
+    border-radius: .5rem;
+    background   : var(--bs-body-bg);
+}
+
+.history-item > summary {
+    display    : flex;
+    align-items: center;
+    gap        : .75rem;
+    padding    : .7rem 1rem;
+    cursor     : pointer;
+    list-style : none;
+}
+
+.history-item > summary:hover {
+    background: var(--bs-tertiary-bg);
+}
+
+.history-title {
+    flex         : 1;
+    min-width    : 0;
+    overflow     : hidden;
+    font-weight  : 600;
+    white-space  : nowrap;
+    text-overflow: ellipsis;
+}
+
+.history-item[open] .history-title {
+    white-space: normal;
+}
+
+.history-date {
+    font-size  : .85rem;
+    white-space: nowrap;
+    color      : var(--bs-secondary-color);
+}
+
+.history-details {
+    padding: .25rem 1rem 1rem 2.6rem;
+}
+
+/* ---------- Footer and back to top ---------- */
+
+.site-footer {
+    padding   : 1.5rem 0 2.5rem;
+    border-top: 1px solid var(--bs-border-color);
+    font-size : .9rem;
+    color     : var(--bs-secondary-color);
+}
+
+.site-footer .container {
+    display  : flex;
+    flex-wrap: wrap;
+    gap      : .5rem 1.5rem;
+}
+
+.site-footer .copyright {
+    margin-left: auto;
+}
+
+.back-to-top {
+    position     : fixed;
+    right        : 1.25rem;
+    bottom       : 1.25rem;
+    z-index      : 10;
+    width        : 2.75rem;
+    height       : 2.75rem;
+    border       : 0;
+    border-radius: 50%;
+    background   : var(--ao-green);
+    color        : #ffffff;
+    box-shadow   : 0 4px 14px rgba(0, 0, 0, .25);
+}
+
+.back-to-top[hidden] {
+    display: none;
+}
+
+.back-to-top:hover {
+    background: var(--ao-teal);
+}
+
+/* ---------- Skeleton while loading ---------- */
+
+.skeleton {
+    background     : linear-gradient(90deg, var(--bs-secondary-bg) 25%, var(--bs-tertiary-bg) 50%, var(--bs-secondary-bg) 75%);
+    background-size: 200% 100%;
+    animation      : skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-text {
+    display      : inline-block;
+    border-radius: .25rem;
+    color        : transparent;
+}
+
+.group-skeleton {
+    height: 3.25rem;
+}
+
+@keyframes skeleton-shimmer {
+    from { background-position: 100% 0; }
+    to   { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero.is-active .hero-icon,
+    .skeleton {
+        animation: none;
+    }
+}
+
+/* ---------- Small screens (after the base rules above) ---------- */
+
+@media (max-width: 576px) {
+    .issue-title {
+        font-size: 1.1rem;
+    }
+
+    .hero {
+        padding: 1.1rem;
+        gap    : .85rem;
+    }
+
+    .hero-title {
+        font-size: 1.25rem;
+    }
+
+    .history-date,
+    .availability-uptime {
+        display: none;
+    }
+
+    .history-details {
+        padding-left: 1rem;
+    }
+
+    .site-footer .copyright {
+        margin-left: 0;
+    }
+}
+
+/* ---------- Ticket numbers and dark cards ---------- */
+
+/* Fixed width so the descriptions in release notes line up. */
+.ticket {
+    display             : inline-block;
+    min-width           : 5.5em;
+    font-weight         : 600;
+    font-variant-numeric: tabular-nums;
+}
+
+[data-bs-theme=dark] .card,
+[data-bs-theme=dark] .history-item {
+    --bs-card-bg    : #262a30;
+    background-color: #262a30;
 }

@@ -256,3 +256,26 @@ describe('buildCalendar', () => {
         assert.ok(lines.every(line => Buffer.byteLength(line) <= 75));
     });
 });
+
+describe('stampAssets', async () => {
+    const { stampAssets } = await import('../stamp-assets.mjs');
+
+    it('adds the version to the site’s own scripts and stylesheets only', () => {
+        const html = '<script src="scripts/main.js"></script><link href="vendor/bootstrap/bootstrap.min.css">'
+            + '<link rel="icon" href="images/favicon.svg"><a href="https://help.assistanceonline.nl">x</a>';
+        assert.equal(stampAssets(html, 'abc1234'),
+            '<script src="scripts/main.js?v=abc1234"></script><link href="vendor/bootstrap/bootstrap.min.css?v=abc1234">'
+            + '<link rel="icon" href="images/favicon.svg"><a href="https://help.assistanceonline.nl">x</a>');
+    });
+});
+
+describe('ticket numbers in lists', () => {
+    it('puts a leading ticket number in its own element', () => {
+        const html = renderMarkdown('* AO-12308 PDF-weergave per template\n* Geen ticket hier\n* Zie AO-1 verderop');
+        const items = JSDOM.fragment(html).querySelectorAll('li');
+        assert.equal(items[0].querySelector('.ticket').textContent, 'AO-12308');
+        assert.equal(items[0].textContent, 'AO-12308 PDF-weergave per template');
+        assert.equal(items[1].querySelector('.ticket'), null);
+        assert.equal(items[2].querySelector('.ticket'), null);
+    });
+});

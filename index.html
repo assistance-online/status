@@ -57,38 +57,26 @@
             </div>
         </nav>
 
-        <main class="container pt-5 pb-5">
+        <main class="container pt-5 pb-4">
 
-            <!-- Algemene systeem status -->
-            <div class="card status-card status-loading mb-2" id="system-status" role="status" aria-live="polite">
-                <div class="status-card-icon"><i class="fas fa-sync fa-spin fa-lg" aria-hidden="true"></i></div>
-                <h5 class="card-title mb-0" data-i18n="status.loading">Bezig met laden ...</h5>
-            </div>
-            <p class="page-meta">
-                <span data-i18n="meta.lastUpdated">Laatst bijgewerkt:</span> <span id="last-updated">-</span>
-                &middot;
-                <a href="feed.xml"><i class="fas fa-rss" aria-hidden="true"></i> <span data-i18n="meta.feed">RSS-feed</span></a>
-                &middot;
-                <a href="agenda.ics"><i class="fas fa-calendar-alt" aria-hidden="true"></i> <span data-i18n="meta.calendar">Agenda</span></a>
-            </p>
+            <!-- Algemene systeem status; the skeleton blocks are replaced once status.json is loaded -->
+            <section class="hero status-loading" id="system-status" role="status" aria-live="polite">
+                <div class="hero-icon skeleton"></div>
+                <div class="hero-text">
+                    <h1 class="hero-title"><span class="skeleton skeleton-text" data-i18n="status.loading">Bezig met laden ...</span></h1>
+                    <p class="hero-meta"><span data-i18n="meta.lastUpdated">Laatst bijgewerkt:</span> <span id="last-updated">-</span></p>
+                </div>
+            </section>
             <div class="stale-warning" id="stale-warning" role="alert" hidden>
                 <i class="fas fa-exclamation-circle" aria-hidden="true"></i> <span></span>
             </div>
 
-            <!-- Status per onderdeel -->
-            <div class="list-group mb-2" id="status-items"></div>
+            <!-- Status en beschikbaarheid per onderdeel, gegroepeerd -->
+            <div class="groups" id="status-items">
+                <div class="card group-skeleton skeleton"></div>
+                <div class="card group-skeleton skeleton"></div>
+            </div>
             <p class="page-meta" data-i18n="meta.filterHint">Klik op een onderdeel om alleen de meldingen daarvan te tonen.</p>
-
-            <details class="card availability mb-4">
-                <summary class="availability-title">
-                    <span data-i18n="availability.title">Beschikbaarheid afgelopen 90 dagen</span>
-                    <span class="availability-summary" id="availability-summary"></span>
-                </summary>
-                <div class="card-body pt-0">
-                    <ul class="availability-list" id="availability-list"></ul>
-                    <p class="page-meta mb-0" data-i18n="availability.legend"></p>
-                </div>
-            </details>
 
             <div class="filter-info" id="filter-info" hidden>
                 <i class="fas fa-filter" aria-hidden="true"></i>
@@ -99,32 +87,45 @@
             </div>
 
             <section id="planned-section" hidden>
-                <h1><span data-i18n="section.planned">Gepland</span> (<span id="planned-count">0</span>)</h1>
+                <h2 class="section-title"><span data-i18n="section.planned">Gepland</span> (<span id="planned-count">0</span>)</h2>
                 <div id="planned-issues" class="issue-list"></div>
             </section>
 
             <section>
-                <h1><span data-i18n="section.current">Actueel</span> (<span id="current-count">0</span>)</h1>
+                <h2 class="section-title"><span data-i18n="section.current">Actueel</span><span id="current-count-wrap" hidden>
+                    (<span id="current-count">0</span>)</span></h2>
                 <div id="current-issues" class="issue-list"></div>
             </section>
 
-            <hr>
-
             <section>
-                <h1 data-i18n="section.history">Geschiedenis</h1>
+                <h2 class="section-title" data-i18n="section.history">Geschiedenis</h2>
                 <div class="history-search">
                     <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="search" class="form-control" id="history-search" autocomplete="off"
                         data-i18n-placeholder="search.placeholder" data-i18n-aria-label="search.label"
                         placeholder="Zoek op titel, ticketnummer of tekst" aria-label="Zoeken in de geschiedenis">
                 </div>
-                <div id="history-issues" class="issue-list"></div>
+                <div id="history-issues" class="history"></div>
                 <div id="history-sentinel" class="history-sentinel" hidden>
                     <i class="fas fa-sync fa-spin" aria-hidden="true"></i> <span data-i18n="section.loadMore">Meer laden ...</span>
                 </div>
             </section>
         </main>
+
+        <footer class="site-footer">
+            <div class="container">
+                <a href="contact.html"><i class="fas fa-envelope" aria-hidden="true"></i> <span data-i18n="nav.contact">Contact</span></a>
+                <a href="https://help.assistanceonline.nl"><i class="fas fa-life-ring" aria-hidden="true"></i> <span data-i18n="footer.help">Documentatie &amp; Support</span></a>
+                <a href="feed.xml"><i class="fas fa-rss" aria-hidden="true"></i> <span data-i18n="meta.feed">RSS-feed</span></a>
+                <a href="agenda.ics"><i class="fas fa-calendar-alt" aria-hidden="true"></i> <span data-i18n="meta.calendar">Agenda</span></a>
+                <span class="copyright">&copy; RGB+ Automatisering</span>
+            </div>
+        </footer>
     </div>
+
+    <button type="button" class="back-to-top" id="back-to-top" data-i18n-aria-label="nav.backToTop" aria-label="Terug naar boven" hidden>
+        <i class="fas fa-arrow-up" aria-hidden="true"></i>
+    </button>
 </body>
 
 </html>

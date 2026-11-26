@@ -54,6 +54,9 @@ jobs:
 
       - name: status.json, feed, agenda en badge genereren
         run: node .github/scripts/build-status.mjs _site
+
+      - name: Versie aan scripts en stylesheets toevoegen
+        run: node .github/scripts/stamp-assets.mjs _site ${GITHUB_SHA::7}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

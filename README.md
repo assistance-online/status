@@ -34,10 +34,10 @@ Een issue heeft een titel, een milestone en minimaal één label nodig.
 - **Updates plaats je als reactie op het issue**, niet door de beschrijving aan te passen. Reacties verschijnen met tijdstip als tijdlijn boven de oorspronkelijke melding, en bij open meldingen staat het tijdstip van de laatste update. Alleen reacties van teamleden worden getoond: mensen die zelf een gepubliceerd issue hebben aangemaakt. Een nieuwe collega verschijnt dus pas met reacties nadat die een eerste issue heeft geplaatst.
 - Open issues met milestone `Announcement` staan onder **Gepland**. Ze tellen niet mee voor de status van de onderdelen of de algemene status.
 - Alle andere open issues staan onder **Actueel** en bepalen de status van de onderdelen.
-- Gesloten issues staan onder **Geschiedenis**, per maand gegroepeerd, met het tijdstip van oplossen en de duur. Daar staan alleen de laatste 50. Lange meldingen zijn ingeklapt met een knop **Lees meer**. Bezoekers kunnen in de geschiedenis zoeken op titel, ticketnummer of tekst.
+- Gesloten issues staan onder **Geschiedenis**, per maand gegroepeerd, met het tijdstip van oplossen en de duur. Daar staan alleen de laatste 50, elk als één regel die je openklikt voor de details. Bezoekers kunnen in de geschiedenis zoeken op titel, ticketnummer of tekst.
 - **Analyse:** begint een reactie met de kop `## Analyse`, dan staat die niet in de tijdlijn maar apart bovenaan de melding. Bedoeld voor de oorzaak, oplossing en maatregelen na een storing `XL` of `L`.
 - Bezoekers kunnen op een onderdeel klikken om alleen de meldingen daarvan te zien. Zo'n gefilterde weergave is te delen via de link, bijvoorbeeld `status.assistanceonline.nl/#onderdeel=AO%20api`.
-- Elke melding heeft een directe link (het linkicoon rechtsboven op de kaart), bijvoorbeeld `status.assistanceonline.nl/#issue-384`. De RSS-feed linkt daar ook naar.
+- Elke melding heeft een directe link (**Directe link** onder de melding), bijvoorbeeld `status.assistanceonline.nl/#issue-384`. De RSS-feed linkt daar ook naar.
 - De tekst is markdown. Geplakte afbeeldingen worden automatisch verkleind tot maximaal 400px hoog, en een klik opent ze op ware grootte.
 
 Er zijn twee issue-templates: **New issue → Storing** en **New issue → Release aankondiging**.
@@ -51,7 +51,7 @@ Een tijd in een verborgen HTML-commentaar in het issue wordt door de statuspagin
 
 ## Beschikbaarheid
 
-Onder de onderdelen staat per onderdeel de beschikbaarheid over de afgelopen 90 dagen: een balkje per dag in de kleur van de zwaarste storing op die dag, en een percentage. Het percentage telt alleen de tijd waarin een storing `XL` of `L` open stond; `M` en `S` zijn wel zichtbaar in de balkjes. Onderhoud en aankondigingen tellen niet mee. Het klopt dus alleen als storingen consequent met de juiste labels worden vastgelegd en op tijd worden gesloten.
+Bij elk onderdeel staat de beschikbaarheid over de afgelopen 90 dagen: een balkje per dag in de kleur van de zwaarste storing op die dag, en een percentage. Het percentage telt alleen de tijd waarin een storing `XL` of `L` open stond; `M` en `S` zijn wel zichtbaar in de balkjes. Onderhoud en aankondigingen tellen niet mee. Het klopt dus alleen als storingen consequent met de juiste labels worden vastgelegd en op tijd worden gesloten.
 
 ## Taal
 
@@ -75,7 +75,7 @@ Bovenaan de pagina staat één algemene status: de zwaarste van alle open issues
 
 ## Labels
 
-Met labels geef je aan op welke onderdelen van het systeem de melding betrekking heeft. Dat moet er minimaal één zijn, maar meer mag ook. Een storing kan bijvoorbeeld in `AO api`, `AO webapplicatie` en `AO chauffeurs app` zitten. Elk label in deze repository verschijnt als onderdeel op de statuspagina.
+Met labels geef je aan op welke onderdelen van het systeem de melding betrekking heeft. Dat moet er minimaal één zijn, maar meer mag ook. Een storing kan bijvoorbeeld in `AO api`, `AO webapplicatie` en `AO chauffeurs app` zitten. Elk label in deze repository verschijnt als onderdeel op de statuspagina. De pagina groepeert ze op de naam: labels die met `AO ` beginnen staan onder **Assistance Online**, labels die met `Integratie ` beginnen onder **Koppelingen**, en de rest onder **Overig**. Werkt alles in een groep, dan is die ingeklapt tot één regel; een groep met een storing gaat vanzelf open.
 
 |Label                |Service              |Omschrijving                          |
 |---------------------|---------------------|--------------------------------------|

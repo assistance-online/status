@@ -2,6 +2,7 @@ import createDOMPurify from 'dompurify';
 import { marked } from 'marked';
 
 export const MAX_IMAGE_HEIGHT = 400;
+const TICKET_PATTERN = /^\s*([A-Z][A-Z0-9]+-\d+)\s+/;
 export const INCIDENT_MILESTONES = ['xl', 'l', 'm', 's'];
 
 // Anyone can open an issue on the public repository, but only collaborators can set a milestone,
@@ -52,10 +53,27 @@ export function createRenderer(window) {
         });
     }
 
+    // Release notes list one ticket per line ("AO-12308 PDF-weergave ..."); a separate element for the ticket
+    // number lets the stylesheet give it a fixed width, so the descriptions line up.
+    function markTicketNumbers(container) {
+        container.querySelectorAll('li').forEach(item => {
+            const text = item.firstChild;
+            const match = text?.nodeType === window.Node.TEXT_NODE ? TICKET_PATTERN.exec(text.nodeValue) : null;
+            if (match) {
+                const ticket = container.ownerDocument.createElement('span');
+                ticket.className = 'ticket';
+                ticket.textContent = match[1];
+                text.nodeValue = ` ${text.nodeValue.slice(match[0].length)}`;
+                item.insertBefore(ticket, text);
+            }
+        });
+    }
+
     return function renderMarkdown(markdown) {
         const container = window.document.createElement('div');
         container.innerHTML = DOMPurify.sanitize(marked.parse(markdown ?? '', { gfm: true, breaks: true }));
         fitImages(container);
+        markTicketNumbers(container);
         container.querySelectorAll('a[href]').forEach(link => {
             link.setAttribute('target', '_blank');
             link.setAttribute('rel', 'noopener');
