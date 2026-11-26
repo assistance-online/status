@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+        content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
     <title>Assistance Online - Status</title>
     <meta name="description" content="Actuele status, storingen en gepland onderhoud van Assistance Online.">
 
@@ -28,10 +28,8 @@
     <script src="scripts/i18n.js"></script>
     <script src="scripts/theme.js"></script>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css"
-        integrity="sha384-yEPZ7jP9S0QKiUQ0m3jjsO4ProIW7wvR9gXkI7JOGa2XVsw53Yke2bsdkBbjmmiX" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-        integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="stylesheets/main.css">
 
     <script src="scripts/main.js" defer></script>
@@ -69,7 +67,12 @@
                 <span data-i18n="meta.lastUpdated">Laatst bijgewerkt:</span> <span id="last-updated">-</span>
                 &middot;
                 <a href="feed.xml"><i class="fas fa-rss" aria-hidden="true"></i> <span data-i18n="meta.feed">RSS-feed</span></a>
+                &middot;
+                <a href="agenda.ics"><i class="fas fa-calendar-alt" aria-hidden="true"></i> <span data-i18n="meta.calendar">Agenda</span></a>
             </p>
+            <div class="stale-warning" id="stale-warning" role="alert" hidden>
+                <i class="fas fa-exclamation-circle" aria-hidden="true"></i> <span></span>
+            </div>
 
             <!-- Status per onderdeel -->
             <div class="list-group mb-2" id="status-items"></div>
@@ -108,6 +111,12 @@
 
             <section>
                 <h1 data-i18n="section.history">Geschiedenis</h1>
+                <div class="history-search">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input type="search" class="form-control" id="history-search" autocomplete="off"
+                        data-i18n-placeholder="search.placeholder" data-i18n-aria-label="search.label"
+                        placeholder="Zoek op titel, ticketnummer of tekst" aria-label="Zoeken in de geschiedenis">
+                </div>
                 <div id="history-issues" class="issue-list"></div>
                 <div id="history-sentinel" class="history-sentinel" hidden>
                     <i class="fas fa-sync fa-spin" aria-hidden="true"></i> <span data-i18n="section.loadMore">Meer laden ...</span>

@@ -1,10 +1,12 @@
-// Generates status.json and feed.xml for the status page from the repository's labels and issues.
+// Generates status.json, feed.xml, agenda.ics and badge.svg for the status page from the repository's labels and issues.
 // Usage: node .github/scripts/build-status.mjs <output-directory>
 // Uses GITHUB_TOKEN when set; without it the unauthenticated API limit (60 requests/hour) applies.
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
-import { buildFeed, createRenderer, getTeamLogins, isPublishedIssue, toIncidents, toPublicIssue } from './lib.mjs';
+import {
+    buildBadge, buildCalendar, buildFeed, createRenderer, getSystemStatus, getTeamLogins, isPublishedIssue, toIncidents, toPublicIssue
+} from './lib.mjs';
 
 const REPOSITORY = process.env.GITHUB_REPOSITORY ?? 'assistance-online/status';
 const API = `https://api.github.com/repos/${REPOSITORY}`;
@@ -92,6 +94,8 @@ const status = {
 await mkdir(outputDirectory, { recursive: true });
 await writeFile(join(outputDirectory, 'status.json'), JSON.stringify(status));
 await writeFile(join(outputDirectory, 'feed.xml'), buildFeed(status, SITE_URL, FEED_SIZE));
-console.log(`Wrote status.json and feed.xml to ${outputDirectory}: ${status.labels.length} labels, `
+await writeFile(join(outputDirectory, 'agenda.ics'), buildCalendar(status, SITE_URL));
+await writeFile(join(outputDirectory, 'badge.svg'), buildBadge(getSystemStatus(status.openIssues, now.getTime())));
+console.log(`Wrote status.json, feed.xml, agenda.ics and badge.svg to ${outputDirectory}: ${status.labels.length} labels, `
     + `${status.openIssues.length} open, ${status.closedIssues.length} closed issues, `
     + `${status.availability.incidents.length} incidents since ${availabilitySince.slice(0, 10)}`);

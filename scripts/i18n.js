@@ -21,6 +21,20 @@
             'status.ok': 'Momenteel zijn er geen actuele verstoringen bekend.',
             'meta.lastUpdated': 'Laatst bijgewerkt:',
             'meta.feed': 'RSS-feed',
+            'meta.calendar': 'Agenda',
+            'stale.warning': 'Deze gegevens zijn mogelijk verouderd: de status is sinds {date} niet meer bijgewerkt.',
+            'schedule.planned': 'Gepland {period}',
+            'schedule.startsIn': 'begint {relative}',
+            'schedule.until': 'Onderhoud tot {time}',
+            'schedule.started': 'Onderhoud gestart {date}',
+            'search.label': 'Zoeken in de geschiedenis',
+            'search.placeholder': 'Zoek op titel, ticketnummer of tekst',
+            'empty.search': 'Geen eerdere meldingen gevonden voor “{query}”.',
+            'issue.started': 'Begonnen {date}',
+            'issue.analysis': 'Analyse',
+            'notFound.title': 'Pagina niet gevonden',
+            'notFound.body': 'Deze pagina bestaat niet (meer). Bekijk de actuele status van Assistance Online op de statuspagina.',
+            'notFound.link': 'Naar de statuspagina',
             'meta.filterHint': 'Klik op een onderdeel om alleen de meldingen daarvan te tonen.',
             'component.filter': 'Alleen meldingen voor dit onderdeel tonen',
             'component.clearFilter': 'Filter wissen',
@@ -85,6 +99,20 @@
             'status.ok': 'There are currently no known disruptions.',
             'meta.lastUpdated': 'Last updated:',
             'meta.feed': 'RSS feed',
+            'meta.calendar': 'Calendar',
+            'stale.warning': 'This information may be outdated: the status has not been updated since {date}.',
+            'schedule.planned': 'Scheduled {period}',
+            'schedule.startsIn': 'starts {relative}',
+            'schedule.until': 'Maintenance until {time}',
+            'schedule.started': 'Maintenance started {date}',
+            'search.label': 'Search the history',
+            'search.placeholder': 'Search by title, ticket number or text',
+            'empty.search': 'No earlier reports found for “{query}”.',
+            'issue.started': 'Started {date}',
+            'issue.analysis': 'Analysis',
+            'notFound.title': 'Page not found',
+            'notFound.body': 'This page does not exist (anymore). See the current status of Assistance Online on the status page.',
+            'notFound.link': 'Go to the status page',
             'meta.filterHint': 'Click a component to only show its reports.',
             'component.filter': 'Only show reports for this component',
             'component.clearFilter': 'Clear filter',
@@ -166,6 +194,12 @@
         document.documentElement.lang = language;
         document.querySelectorAll('[data-i18n]').forEach(element => {
             element.textContent = t(element.dataset.i18n);
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+            element.placeholder = t(element.dataset.i18nPlaceholder);
+        });
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(element => {
+            element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
         });
         document.querySelectorAll('[data-i18n-html]').forEach(element => {
             element.innerHTML = t(element.dataset.i18nHtml);

@@ -7,6 +7,10 @@ updates:
     # Only propose versions that have been out for two weeks, so freshly published (possibly compromised) releases are skipped.
     cooldown:
       default-days: 14
+    ignore:
+      # Stays on Font Awesome 5, so the icons match the AO portals.
+      - dependency-name: '@fortawesome/fontawesome-free'
+        update-types: ['version-update:semver-major']
     groups:
       build-dependencies:
         patterns: ['*']

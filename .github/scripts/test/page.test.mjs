@@ -43,7 +43,7 @@ function createStatus() {
         availability: {
             since: isoDaysAgo(90),
             incidents: [{ number: 5, title: 'API plat', milestone: 'XL', labels: ['AO api'],
-                createdAt: isoDaysAgo(10), closedAt: isoDaysAgo(9) }]
+                startAt: isoDaysAgo(10), endAt: isoDaysAgo(9) }]
         }
     };
 }
@@ -190,5 +190,77 @@ describe('status page', () => {
         await dom.window.eval('loadStatus()');
         assert.equal(fetchCount, 2);
         assert.equal(document.querySelector('#history-issues .issue'), firstCard);
+    });
+});
+
+describe('status page scheduling, analysis and search', () => {
+    afterEach(() => dom?.window.close());
+
+    function statusWith(changes) {
+        const status = createStatus();
+        changes(status);
+        return status;
+    }
+
+    it('warns when the data has not been updated for hours', async () => {
+        const document = await load({ status: statusWith(status => { status.generatedAt = isoDaysAgo(0.5); }) });
+        assert.equal(document.getElementById('stale-warning').hidden, false);
+        assert.match(text(document, '#stale-warning'), /mogelijk verouderd/);
+    });
+
+    it('does not warn for recent data', async () => {
+        const document = await load();
+        assert.equal(document.getElementById('stale-warning').hidden, true);
+    });
+
+    it('shows the planned time and a countdown for an upcoming release', async () => {
+        const document = await load({ status: statusWith(status => {
+            Object.assign(status.openIssues[1], { startAt: isoDaysAgo(-3), endAt: isoDaysAgo(-3.02) });
+        }) });
+        assert.match(text(document, '#issue-1001 .issue-dates'), /^Gepland .* · begint over 3 dagen$/);
+    });
+
+    it('treats a release as maintenance during its scheduled window', async () => {
+        const document = await load({ status: statusWith(status => {
+            status.openIssues.splice(0, 1);
+            Object.assign(status.openIssues[0], { startAt: isoDaysAgo(0.01), endAt: isoDaysAgo(-0.01) });
+        }) });
+        assert.equal(text(document, '#system-status .card-title'), 'Systeem is in onderhoud');
+        assert.equal(document.getElementById('planned-section').hidden, true);
+        assert.ok(document.querySelector('#current-issues #issue-1001'));
+        assert.match(text(document, '#issue-1001 .issue-dates'), /^Onderhoud tot /);
+        assert.equal(text(document, '[data-component="Integratie SOS"] .status-text'), 'Onderhoud');
+    });
+
+    it('shows an analysis above the updates', async () => {
+        const document = await load({ status: statusWith(status => {
+            status.closedIssues[0].analysis = '<p><strong>Oorzaak:</strong> volle schijf</p>';
+        }) });
+        const body = document.querySelector('#issue-2 .issue-body');
+        assert.equal(body.firstElementChild.className, 'issue-analysis');
+        assert.match(text(body, '.issue-analysis'), /Analyses*Oorzaak: volle schijf/);
+    });
+
+    it('uses a start time from the issue for the duration', async () => {
+        const document = await load({ status: statusWith(status => {
+            status.closedIssues[0].startAt = isoDaysAgo(3);
+        }) });
+        assert.match(text(document, '#issue-2 .issue-dates'), /^Begonnen .* · Gemeld .* · Opgelost .* · Duur 1 dag 12 uur$/);
+    });
+
+    it('searches the history', async () => {
+        const document = await load({ status: statusWith(status => {
+            status.closedIssues[5].title = 'AO-12308 PDF-weergave per template';
+        }) });
+        const input = document.getElementById('history-search');
+        input.value = 'ao-12308';
+        input.dispatchEvent(new dom.window.Event('input'));
+        await new Promise(resolve => setTimeout(resolve, 250));
+        assert.equal(document.querySelectorAll('#history-issues .issue').length, 1);
+
+        input.value = 'bestaat niet';
+        input.dispatchEvent(new dom.window.Event('input'));
+        await new Promise(resolve => setTimeout(resolve, 250));
+        assert.match(text(document, '#history-issues .empty-text'), /Geen eerdere meldingen gevonden voor “bestaat niet”/);
     });
 });

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="nl">
+
+<head>
+    <base href="/">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="noindex">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <title>Assistance Online - Pagina niet gevonden</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <script src="scripts/i18n.js"></script>
+    <script src="scripts/theme.js"></script>
+
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="stylesheets/main.css">
+</head>
+
+<body>
+    <div class="wrapper">
+        <nav class="navbar">
+            <div class="container">
+                <a href="https://berger.assistanceonline.nl">
+                    <img src="images/ao-logo-small.svg" alt="Assistance Online">
+                </a>
+
+                <div class="nav-actions">
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-thermometer-half" aria-hidden="true"></i>
+                        <span data-i18n="nav.status">Status</span>
+                    </a>
+                    <button type="button" class="nav-link nav-button" id="language-toggle">EN</button>
+                    <button type="button" class="nav-link nav-button" id="theme-toggle" aria-label="Donkere modus">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container pt-5 pb-5">
+            <article class="card contact-card status-unknown">
+                <div class="card-body">
+                    <h1 class="issue-title page-title">
+                        <i class="fas fa-question-circle status-icon me-2" aria-hidden="true"></i><span
+                            data-i18n="notFound.title">Pagina niet gevonden</span>
+                    </h1>
+                    <p data-i18n="notFound.body">
+                        Deze pagina bestaat niet (meer). Bekijk de actuele status van Assistance Online op de statuspagina.
+                    </p>
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i> <span data-i18n="notFound.link">Naar de statuspagina</span>
+                    </a>
+                </div>
+            </article>
+        </main>
+    </div>
+</body>
+
+</html>

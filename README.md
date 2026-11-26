@@ -8,12 +8,21 @@ De statuspagina is een statische site op GitHub Pages. De browser roept de GitHu
 
 1. Bij elke wijziging aan een issue, reactie, label of milestone start de workflow [`Statuspagina publiceren`](.github/workflows/deploy.yml). Hij start ook bij een push naar `master`, één keer per uur als vangnet en handmatig via **Actions → Statuspagina publiceren → Run workflow**.
 2. De workflow draait eerst de tests. Faalt een test, dan blijft de huidige pagina staan.
-3. Het script [`build-status.mjs`](.github/scripts/build-status.mjs) haalt de labels, issues en reacties op. Het zet de markdown om naar veilige HTML, berekent de storingen van de afgelopen 90 dagen en schrijft `status.json` en de RSS-feed `feed.xml`.
-4. De workflow publiceert de site samen met die twee bestanden op GitHub Pages.
+3. Het script [`copy-vendor.mjs`](.github/scripts/copy-vendor.mjs) zet Bootstrap en Font Awesome uit npm in de site. De pagina laadt niets van een CDN, zodat hij ook werkt als een CDN storing heeft.
+4. Het script [`build-status.mjs`](.github/scripts/build-status.mjs) haalt de labels, issues en reacties op. Het zet de markdown om naar veilige HTML, berekent de storingen van de afgelopen 90 dagen en schrijft `status.json`, de RSS-feed `feed.xml`, de agenda `agenda.ics` en de badge `badge.svg`.
+5. De workflow publiceert de site samen met die bestanden op GitHub Pages.
 
-Een wijziging staat na ongeveer een minuut op de pagina. Een geopende pagina haalt elke minuut zelf de nieuwste status op, dus verversen is niet nodig. Staat een wijziging er niet, kijk dan bij **Actions** of de laatste run gelukt is.
+Een wijziging staat na ongeveer een minuut op de pagina. Een geopende pagina haalt elke minuut zelf de nieuwste status op, dus verversen is niet nodig. Staat een wijziging er niet, kijk dan bij **Actions** of de laatste run gelukt is. Is de status meer dan drie uur niet bijgewerkt, dan toont de pagina een waarschuwing dat de gegevens mogelijk verouderd zijn; dan is het publiceren stuk.
 
-Klanten kunnen zich abonneren op de RSS-feed: [status.assistanceonline.nl/feed.xml](https://status.assistanceonline.nl/feed.xml).
+## Abonneren en insluiten
+
+- **RSS-feed:** [status.assistanceonline.nl/feed.xml](https://status.assistanceonline.nl/feed.xml).
+- **Agenda** met de geplande releases en onderhoud: [status.assistanceonline.nl/agenda.ics](https://status.assistanceonline.nl/agenda.ics). In Outlook: **Agenda toevoegen → Abonneren via internet** en deze link plakken. De agenda werkt zichzelf bij.
+- **Statusbadge** voor andere sites, bijvoorbeeld de helpsite. Die toont "operationeel", "onderhoud" of de ernst van een storing, en wordt bij elke publicatie (minimaal elk uur) bijgewerkt:
+
+  ```html
+  <a href="https://status.assistanceonline.nl/"><img src="https://status.assistanceonline.nl/badge.svg" alt="Status Assistance Online"></a>
+  ```
 
 Bij **Settings → Pages** moet de bron op **GitHub Actions** staan, niet op "Deploy from branch".
 
@@ -25,12 +34,20 @@ Een issue heeft een titel, een milestone en minimaal één label nodig.
 - **Updates plaats je als reactie op het issue**, niet door de beschrijving aan te passen. Reacties verschijnen met tijdstip als tijdlijn boven de oorspronkelijke melding, en bij open meldingen staat het tijdstip van de laatste update. Alleen reacties van teamleden worden getoond: mensen die zelf een gepubliceerd issue hebben aangemaakt. Een nieuwe collega verschijnt dus pas met reacties nadat die een eerste issue heeft geplaatst.
 - Open issues met milestone `Announcement` staan onder **Gepland**. Ze tellen niet mee voor de status van de onderdelen of de algemene status.
 - Alle andere open issues staan onder **Actueel** en bepalen de status van de onderdelen.
-- Gesloten issues staan onder **Geschiedenis**, per maand gegroepeerd, met het tijdstip van oplossen en de duur. Daar staan alleen de laatste 50. Lange meldingen zijn ingeklapt met een knop **Lees meer**.
+- Gesloten issues staan onder **Geschiedenis**, per maand gegroepeerd, met het tijdstip van oplossen en de duur. Daar staan alleen de laatste 50. Lange meldingen zijn ingeklapt met een knop **Lees meer**. Bezoekers kunnen in de geschiedenis zoeken op titel, ticketnummer of tekst.
+- **Analyse:** begint een reactie met de kop `## Analyse`, dan staat die niet in de tijdlijn maar apart bovenaan de melding. Bedoeld voor de oorzaak, oplossing en maatregelen na een storing `XL` of `L`.
 - Bezoekers kunnen op een onderdeel klikken om alleen de meldingen daarvan te zien. Zo'n gefilterde weergave is te delen via de link, bijvoorbeeld `status.assistanceonline.nl/#onderdeel=AO%20api`.
 - Elke melding heeft een directe link (het linkicoon rechtsboven op de kaart), bijvoorbeeld `status.assistanceonline.nl/#issue-384`. De RSS-feed linkt daar ook naar.
 - De tekst is markdown. Geplakte afbeeldingen worden automatisch verkleind tot maximaal 400px hoog, en een klik opent ze op ware grootte.
 
 Er zijn twee issue-templates: **New issue → Storing** en **New issue → Release aankondiging**.
+
+## Begin- en eindtijden
+
+Een tijd in een verborgen HTML-commentaar in het issue wordt door de statuspagina gelezen, bijvoorbeeld `<!-- start: 03-12-2026 11:30, eind: 03-12-2026 12:00 -->`. Toegestaan zijn `start`/`begin` en `eind`/`einde`/`end`, met een datum als `DD-MM-JJJJ` of `JJJJ-MM-DD` en Nederlandse tijd.
+
+- **Releases en onderhoud:** zonder commentaar geldt de datum en tijd uit de titel ("… op 03-12-2026 om 11:30") als start, met een duur van 30 minuten. Vooraf staat de release onder **Gepland** met "begint over …". Tussen start en eind telt hij automatisch als onderhoud, ook als de milestone nog op `Announcement` staat. De releases staan ook in de agenda.
+- **Storingen:** begon de storing eerder dan het issue is aangemaakt, of was hij eerder verholpen dan het issue gesloten werd? Dan gelden de tijden uit het commentaar voor de duur en de beschikbaarheid.
 
 ## Beschikbaarheid
 
@@ -85,16 +102,17 @@ Een gesloten issue komt in de geschiedenis te staan. Zo blijft er een overzicht 
 ```sh
 npm ci --prefix .github/scripts
 npm test --prefix .github/scripts
+node .github/scripts/copy-vendor.mjs .
 node .github/scripts/build-status.mjs .
 npx http-server -p 8080 -c-
 ```
 
-Open daarna http://localhost:8080. Het script werkt zonder token, maar dan geldt de limiet van 60 GitHub API-requests per uur. Zet `GITHUB_TOKEN` als je vaker wilt draaien. `status.json` en `feed.xml` staan in `.gitignore`.
+Open daarna http://localhost:8080. Het script werkt zonder token, maar dan geldt de limiet van 60 GitHub API-requests per uur. Zet `GITHUB_TOKEN` als je vaker wilt draaien. De gegenereerde bestanden (`status.json`, `feed.xml`, `agenda.ics`, `badge.svg` en de map `vendor`) staan in `.gitignore`.
 
 De tests in [`.github/scripts/test`](.github/scripts/test) controleren de buildfuncties (opschonen van HTML, afbeeldingen, reacties, feed) en draaien de pagina zelf in een gesimuleerde browser tegen vaste testdata.
 
 # Onderhoud
 
-[Dependabot](.github/dependabot.yml) stelt wekelijks een PR voor als er een nieuwe versie is van de build-afhankelijkheden of van de GitHub Actions. Nieuwe versies worden pas na twee weken voorgesteld. De bibliotheken die de pagina zelf via een CDN laadt (Bootstrap en Font Awesome in `index.html` en `contact.html`) vallen daar niet onder; die werk je met de hand bij, inclusief de `integrity`-hash.
+[Dependabot](.github/dependabot.yml) stelt wekelijks een PR voor als er een nieuwe versie is van de npm-pakketten (ook Bootstrap en Font Awesome) of van de GitHub Actions. Nieuwe versies worden pas na twee weken voorgesteld. Font Awesome blijft op versie 5, zodat de icoontjes gelijk blijven aan die van de AO-portals.
 
-Beide pagina's hebben een Content-Security-Policy in een `<meta>`-tag. Laad je een script, stylesheet of font van een nieuwe bron, voeg die bron dan daar toe.
+Alle pagina's (`index.html`, `contact.html` en `404.html`) hebben een Content-Security-Policy in een `<meta>`-tag die alleen bestanden van de eigen site toestaat. Laad je iets van een andere bron, voeg die bron dan daar toe.

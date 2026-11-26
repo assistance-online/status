@@ -32,12 +32,17 @@ const AVAILABILITY_DAYS = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FILTER_HASH_PREFIX = '#onderdeel=';
 const ISSUE_HASH_PATTERN = /^#issue-(\d+)$/;
+// The data is rebuilt at least hourly; much older data means publishing has stopped working.
+const STALE_AFTER_MS = 3 * 60 * 60 * 1000;
+const SEARCH_DEBOUNCE_MS = 200;
 
 const { t } = window.i18n;
 
 const state = {
     status: null,
     filter: null,
+    search: '',
+    searchTexts: new Map(),
     lastLoaded: 0,
     renderedSections: {},
     historyIssues: [],
@@ -61,10 +66,32 @@ function formatDate(isoDate) {
         .format(new Date(isoDate));
 }
 
+function formatTime(isoDate) {
+    return new Intl.DateTimeFormat(window.i18n.locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(isoDate));
+}
+
 function formatDateTime(isoDate) {
-    const time = new Intl.DateTimeFormat(window.i18n.locale, { hour: '2-digit', minute: '2-digit' })
-        .format(new Date(isoDate));
-    return `${formatDate(isoDate)} ${time}`;
+    return `${formatDate(isoDate)} ${formatTime(isoDate)}`;
+}
+
+function formatPeriod(startIso, endIso) {
+    if (!endIso) {
+        return formatDateTime(startIso);
+    }
+    const sameDay = formatDate(startIso) === formatDate(endIso);
+    return `${formatDateTime(startIso)} – ${sameDay ? formatTime(endIso) : formatDateTime(endIso)}`;
+}
+
+function formatRelative(isoDate, now = Date.now()) {
+    const minutes = Math.round((Date.parse(isoDate) - now) / 60000);
+    const format = new Intl.RelativeTimeFormat(window.i18n.locale, { numeric: 'auto' });
+    if (Math.abs(minutes) < 60) {
+        return format.format(minutes, 'minute');
+    }
+    if (Math.abs(minutes) < 48 * 60) {
+        return format.format(Math.round(minutes / 60), 'hour');
+    }
+    return format.format(Math.round(minutes / 1440), 'day');
 }
 
 function formatMonth(isoDate) {
@@ -205,12 +232,42 @@ function isIncident(status) {
     return [...INCIDENT_SEVERITY, StatusEnum.UnderInvestigation].includes(status);
 }
 
+function isInScheduledWindow(issue, now = Date.now()) {
+    return !!issue.startAt && Date.parse(issue.startAt) <= now && (!issue.endAt || now < Date.parse(issue.endAt));
+}
+
+// An announcement counts as maintenance during its scheduled window, so nobody has to switch the
+// milestone at the exact start time.
+function getEffectiveMilestone(issue) {
+    return getStatusOfMilestone(issue.milestone) === StatusEnum.Announcement && isInScheduledWindow(issue)
+        ? 'Maintenance'
+        : issue.milestone;
+}
+
+function getIssueStatus(issue) {
+    return getStatusOfMilestone(getEffectiveMilestone(issue));
+}
+
 function isAnnouncement(issue) {
-    return getStatusOfMilestone(issue.milestone) === StatusEnum.Announcement;
+    return getIssueStatus(issue) === StatusEnum.Announcement;
 }
 
 function matchesFilter(issue) {
     return !state.filter || issue.labels.includes(state.filter);
+}
+
+function getSearchText(issue) {
+    if (!state.searchTexts.has(issue.number)) {
+        const container = document.createElement('div');
+        container.innerHTML = [issue.html, issue.analysis ?? '', ...issue.updates.map(update => update.html)].join(' ');
+        state.searchTexts.set(issue.number, `${issue.title} ${issue.labels.join(' ')} ${container.textContent}`.toLowerCase());
+    }
+    return state.searchTexts.get(issue.number);
+}
+
+function matchesSearch(issue) {
+    const terms = state.search.toLowerCase().split(/\s+/).filter(Boolean);
+    return terms.every(term => getSearchText(issue).includes(term));
 }
 
 function getCurrentIssues() {
@@ -222,7 +279,7 @@ function buildComponents() {
     return state.status.labels.map(name => {
         const milestones = [...new Set(currentIssues
             .filter(issue => issue.labels.includes(name))
-            .map(issue => issue.milestone))];
+            .map(getEffectiveMilestone))];
         return { name, status: getStatusOfMilestones(milestones) };
     });
 }
@@ -242,7 +299,7 @@ function getAvailabilityDays(now) {
 }
 
 function getIncidentSpan(incident, now) {
-    return { start: Date.parse(incident.createdAt), end: incident.closedAt ? Date.parse(incident.closedAt) : now };
+    return { start: Date.parse(incident.startAt), end: incident.endAt ? Date.parse(incident.endAt) : now };
 }
 
 function getDowntimeMs(incidents, periodStart, now) {
@@ -312,13 +369,28 @@ function renderFavicon(status) {
 }
 
 function renderSystemStatus() {
-    const status = getStatusOfMilestones(getCurrentIssues().map(issue => issue.milestone));
+    const status = getStatusOfMilestones(getCurrentIssues().map(getEffectiveMilestone));
     renderSystemStatusCard(getStatusKey(status), getStatusIcon(status), getSystemStatusText(status));
     renderFavicon(status);
 }
 
 function renderLastUpdated() {
     document.getElementById('last-updated').textContent = formatDateTime(state.status.generatedAt);
+}
+
+function renderStaleWarning() {
+    const warning = document.getElementById('stale-warning');
+    const stale = Date.now() - Date.parse(state.status.generatedAt) > STALE_AFTER_MS;
+    warning.hidden = !stale;
+    if (stale) {
+        warning.querySelector('span').textContent = t('stale.warning', { date: formatDateTime(state.status.generatedAt) });
+    }
+}
+
+function updateCountdowns() {
+    document.querySelectorAll('[data-starts-at]').forEach(element => {
+        element.textContent = t('schedule.startsIn', { relative: formatRelative(element.dataset.startsAt) });
+    });
 }
 
 function renderComponents() {
@@ -385,16 +457,48 @@ function renderUpdates(issue) {
         <h3 class="issue-section-title">${escapeHtml(t('issue.description'))}</h3>`;
 }
 
-function renderIssue(issue, { collapsible }) {
-    const status = getStatusOfMilestone(issue.milestone);
-    const meta = [t('issue.reported', { date: formatDateTime(issue.createdAt) })];
+function getIssueMeta(issue, status) {
+    if (!issue.closedAt && issue.startAt && status === StatusEnum.Announcement) {
+        return [t('schedule.planned', { period: formatPeriod(issue.startAt, issue.endAt) })];
+    }
+    if (!issue.closedAt && issue.startAt && status === StatusEnum.Maintenance && isInScheduledWindow(issue)) {
+        return [issue.endAt ? t('schedule.until', { time: formatTime(issue.endAt) }) : t('schedule.started', { date: formatDateTime(issue.startAt) })];
+    }
+
+    // For incidents, a start/end time written in the issue is more accurate than when it was opened/closed.
+    const incident = isIncident(status);
+    const start = incident && issue.startAt ? issue.startAt : issue.createdAt;
+    const end = incident && issue.endAt ? issue.endAt : issue.closedAt;
+    const meta = [];
+    if (start !== issue.createdAt) {
+        meta.push(t('issue.started', { date: formatDateTime(start) }));
+    }
+    meta.push(t('issue.reported', { date: formatDateTime(issue.createdAt) }));
+
     if (issue.closedAt) {
-        meta.push(t(isIncident(status) ? 'issue.resolved' : 'issue.completed', { date: formatDateTime(issue.closedAt) }));
-        if (isIncident(status)) {
-            meta.push(t('issue.duration', { duration: formatDuration(issue.createdAt, issue.closedAt) }));
+        meta.push(t(incident ? 'issue.resolved' : 'issue.completed', { date: formatDateTime(end) }));
+        if (incident) {
+            meta.push(t('issue.duration', { duration: formatDuration(start, end) }));
         }
     } else if (Date.parse(issue.lastUpdateAt) - Date.parse(issue.createdAt) > 60 * 1000) {
         meta.push(t('issue.lastUpdate', { date: formatDateTime(issue.lastUpdateAt) }));
+    }
+    return meta;
+}
+
+function renderAnalysis(issue) {
+    // The analysis html is rendered and sanitized by the build script.
+    return issue.analysis
+        ? `<section class="issue-analysis"><h3 class="issue-section-title">${escapeHtml(t('issue.analysis'))}</h3>${issue.analysis}</section>`
+        : '';
+}
+
+function renderIssue(issue, { collapsible }) {
+    const status = getIssueStatus(issue);
+    const meta = getIssueMeta(issue, status).map(escapeHtml);
+    const upcoming = !issue.closedAt && status === StatusEnum.Announcement && issue.startAt && Date.parse(issue.startAt) > Date.now();
+    if (upcoming) {
+        meta.push(`<span class="countdown" data-starts-at="${escapeHtml(issue.startAt)}"></span>`);
     }
 
     const labels = issue.labels
@@ -417,9 +521,9 @@ function renderIssue(issue, { collapsible }) {
                 <div class="issue-meta">
                     <span class="badge status-badge">${escapeHtml(getStatusDescription(status))}</span>
                     ${labels}
-                    <div class="issue-dates">${meta.map(escapeHtml).join(' &middot; ')}</div>
+                    <div class="issue-dates">${meta.join(' &middot; ')}</div>
                 </div>
-                <div class="issue-body${collapsible ? ' is-collapsible' : ''}">${renderUpdates(issue)}${issue.html}</div>
+                <div class="issue-body${collapsible ? ' is-collapsible' : ''}">${renderAnalysis(issue)}${renderUpdates(issue)}${issue.html}</div>
                 ${collapsible ? `<button type="button" class="btn btn-link issue-toggle" aria-expanded="false" hidden>${escapeHtml(t('issue.readMore'))}</button>` : ''}
             </div>
         </article>`;
@@ -448,12 +552,15 @@ function renderCurrent() {
 function renderHistory() {
     const list = document.getElementById('history-issues');
     const previouslyRendered = state.historyRendered;
-    state.historyIssues = state.status.closedIssues.filter(matchesFilter);
+    state.historyIssues = state.status.closedIssues.filter(issue => matchesFilter(issue) && matchesSearch(issue));
     state.historyRendered = 0;
     state.historyLastMonth = null;
-    list.innerHTML = state.historyIssues.length > 0
-        ? ''
-        : `<p class="empty-text">${escapeHtml(t(state.filter ? 'empty.historyFiltered' : 'empty.history'))}</p>`;
+
+    let emptyText = t(state.filter ? 'empty.historyFiltered' : 'empty.history');
+    if (state.search.trim()) {
+        emptyText = t('empty.search', { query: state.search.trim() });
+    }
+    list.innerHTML = state.historyIssues.length > 0 ? '' : `<p class="empty-text">${escapeHtml(emptyText)}</p>`;
 
     do {
         renderNextHistoryBatch();
@@ -499,14 +606,18 @@ function renderSection(name, data, render) {
 
 function render() {
     const { status } = state;
+    // Effective milestones change when a scheduled maintenance window starts or ends.
+    const openState = [status.openIssues, status.openIssues.map(getEffectiveMilestone)];
     renderLastUpdated();
+    renderStaleWarning();
     renderFilterInfo();
-    renderSection('system', getCurrentIssues().map(issue => issue.milestone), renderSystemStatus);
-    renderSection('components', [status.labels, getCurrentIssues()], renderComponents);
+    renderSection('system', getCurrentIssues().map(getEffectiveMilestone), renderSystemStatus);
+    renderSection('components', [status.labels, openState], renderComponents);
     renderSection('availability', [status.labels, status.availability, new Date().toDateString()], renderAvailability);
-    renderSection('planned', status.openIssues, renderPlanned);
-    renderSection('current', status.openIssues, renderCurrent);
-    renderSection('history', status.closedIssues, renderHistory);
+    renderSection('planned', openState, renderPlanned);
+    renderSection('current', openState, renderCurrent);
+    renderSection('history', [status.closedIssues, state.search], renderHistory);
+    updateCountdowns();
 }
 
 // ---------- Behaviour ----------
@@ -586,8 +697,10 @@ function showLinkedIssue() {
     if (!exists) {
         return;
     }
-    if (state.filter) {
+    if (state.filter || state.search) {
         state.filter = null;
+        state.search = '';
+        document.getElementById('history-search').value = '';
         render();
     }
 
@@ -617,6 +730,17 @@ function handleHashChange() {
 }
 
 function setUpInteractions() {
+    let searchTimer;
+    document.getElementById('history-search').addEventListener('input', event => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            state.search = event.target.value;
+            if (state.status) {
+                render();
+            }
+        }, SEARCH_DEBOUNCE_MS);
+    });
+
     document.getElementById('status-items').addEventListener('click', event => {
         const button = event.target.closest('[data-component]');
         if (button) {
@@ -649,9 +773,13 @@ function setUpInteractions() {
         }
     });
 
-    setInterval(() => {
+    // Also re-render with unchanged data: countdowns, maintenance windows and the stale check depend on the time.
+    setInterval(async () => {
         if (!document.hidden) {
-            loadStatus();
+            await loadStatus();
+            if (state.status) {
+                render();
+            }
         }
     }, REFRESH_INTERVAL_MS);
 }
@@ -671,6 +799,7 @@ async function loadStatus() {
         if (state.status?.generatedAt !== status.generatedAt) {
             const firstLoad = !state.status;
             state.status = status;
+            state.searchTexts.clear();
             render();
             if (firstLoad) {
                 showLinkedIssue();

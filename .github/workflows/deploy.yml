@@ -49,7 +49,10 @@ jobs:
       - name: Site samenstellen
         run: rsync -a --exclude='.git*' --exclude='_site' --exclude='README.md' ./ _site/
 
-      - name: status.json en feed.xml genereren
+      - name: Bootstrap en Font Awesome kopiëren
+        run: node .github/scripts/copy-vendor.mjs _site
+
+      - name: status.json, feed, agenda en badge genereren
         run: node .github/scripts/build-status.mjs _site
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
