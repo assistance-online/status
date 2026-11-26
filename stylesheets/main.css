@@ -3,7 +3,7 @@ html {
     padding    : 0;
     text-align : left;
     font-size  : 14px;
-    font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif;
+    font-family: 'Source Sans 3', 'Source Sans Pro', Arial, Helvetica, sans-serif;
     font-weight: normal;
     color      : #212529;
     min-height : 100%;
@@ -76,7 +76,8 @@ p {
 }
 
 hr {
-    color        : 1px solid #dddddd;
+    border-top   : 1px solid #dddddd;
+    opacity      : 1;
     margin-top   : 3rem;
     margin-bottom: 3rem;
     margin-left  : auto;
@@ -101,8 +102,16 @@ dl dt h2 {
     font-size: 1.6rem;
 }
 
-dd img {
-    max-width: 100%;
+dd img.issue-image {
+    display      : block;
+    max-width    : 100%;
+    max-height   : 400px;
+    height       : auto;
+    margin       : .5rem 0 1rem;
+    border       : 1px solid #dddddd;
+    border-radius: .25rem;
+    box-shadow   : 0 1px 4px rgba(0, 0, 0, 0.1);
+    cursor       : zoom-in;
 }
 
 .bg-danger {

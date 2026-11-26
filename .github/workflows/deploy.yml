@@ -1,0 +1,61 @@
+name: Statuspagina publiceren
+
+on:
+  push:
+    branches: [master]
+  issues:
+    types: [opened, edited, deleted, transferred, closed, reopened, labeled, unlabeled, milestoned, demilestoned]
+  label:
+    types: [created, edited, deleted]
+  milestone:
+    types: [edited, deleted]
+  schedule:
+    # Safety net in case an issue event was missed.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer pending run replaces an older pending one,
+# and every run reads the current state of the issues, so the last one always wins.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Site samenstellen
+        run: rsync -a --exclude='.git*' --exclude='_site' --exclude='README.md' ./ _site/
+
+      - name: status.json genereren
+        run: node .github/scripts/build-status.mjs _site/status.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
