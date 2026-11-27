@@ -321,3 +321,43 @@ describe('status banner and component groups', () => {
         assert.ok(item.querySelector('.history-details .github-link'));
     });
 });
+
+describe('page index', () => {
+    afterEach(() => dom?.window.close());
+
+    function statusOverMonths() {
+        return statusWithHistory(Array.from({ length: 25 }, (_, index) => issue(index + 2, { createdAt: isoDaysAgo(index * 6 + 1) })));
+    }
+
+    function statusWithHistory(closedIssues) {
+        const status = createStatus();
+        status.closedIssues = closedIssues;
+        return status;
+    }
+
+    it('lists every month of the history, also months that are not rendered yet', async () => {
+        const status = statusOverMonths();
+        const document = await load({ status });
+        const monthKeys = new Set(status.closedIssues.map(item => {
+            const date = new Date(item.createdAt);
+            return `month-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        }));
+        const targets = [...document.querySelectorAll('#page-index-months a')].map(link => link.dataset.target);
+        assert.deepEqual(targets, [...monthKeys]);
+        assert.equal(document.getElementById(targets.at(-1)), null);
+    });
+
+    it('renders the history up to a month that is clicked in the index', async () => {
+        const document = await load({ status: statusOverMonths() });
+        const last = [...document.querySelectorAll('#page-index-months a')].at(-1);
+        last.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+        assert.ok(document.getElementById(last.dataset.target));
+        assert.equal(dom.window.location.hash, '');
+    });
+
+    it('hides sections that are not on the page', async () => {
+        const document = await load();
+        const planned = document.querySelector('#page-index a[data-target="planned-section"]');
+        assert.equal(planned.parentElement.hidden, document.getElementById('planned-section').hidden);
+    });
+});

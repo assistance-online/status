@@ -88,15 +88,15 @@
                 <div id="planned-issues" class="issue-list"></div>
             </section>
 
-            <section>
+            <section id="current-section">
                 <h2 class="section-title"><span data-i18n="section.current">Actueel</span><span id="current-count-wrap" hidden>
                     (<span id="current-count">0</span>)</span></h2>
                 <div id="current-issues" class="issue-list"></div>
             </section>
 
-            <section>
+            <section id="history-section">
                 <h2 class="section-title" data-i18n="section.history">Geschiedenis</h2>
-                <div class="history-search">
+                <div class="history-search" id="history-search-wrap">
                     <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="search" class="form-control" id="history-search" autocomplete="off"
                         data-i18n-placeholder="search.placeholder" data-i18n-aria-label="search.label"
@@ -108,6 +108,19 @@
                 </div>
             </section>
         </main>
+
+        <!-- Only shown on wide screens, in the empty space next to the content -->
+        <nav class="page-index" id="page-index" data-i18n-aria-label="index.title" aria-label="Op deze pagina">
+            <p class="page-index-title" data-i18n="index.title">Op deze pagina</p>
+            <ul>
+                <li><a href="#system-status" data-target="system-status" data-i18n="index.overview">Overzicht</a></li>
+                <li><a href="#planned-section" data-target="planned-section" data-i18n="section.planned">Gepland</a></li>
+                <li><a href="#current-section" data-target="current-section" data-i18n="section.current">Actueel</a></li>
+                <li><a href="#history-section" data-target="history-section" data-i18n="section.history">Geschiedenis</a></li>
+                <li><a href="#history-search-wrap" data-target="history-search-wrap" class="page-index-sub" data-i18n="index.search">Zoeken</a></li>
+            </ul>
+            <div id="page-index-months" class="page-index-months"></div>
+        </nav>
 
         <footer class="site-footer">
             <div class="container">

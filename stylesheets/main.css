@@ -80,10 +80,12 @@
 /* ---------- Base ---------- */
 
 html {
-    margin     : 0;
-    padding    : 0;
-    font-size  : 14px;
-    min-height : 100%;
+    margin            : 0;
+    padding           : 0;
+    font-size         : 14px;
+    min-height        : 100%;
+    /* Anchors and scrollIntoView stop below the sticky header. */
+    scroll-padding-top: 50px;
 }
 
 body {
@@ -91,6 +93,17 @@ body {
     padding         : 0;
     min-height      : 100%;
     background-color: var(--ao-page-bg);
+}
+
+/* Pushes the footer to the bottom of the screen on short pages. */
+.wrapper {
+    display       : flex;
+    flex-direction: column;
+    min-height    : 100vh;
+}
+
+.wrapper > main {
+    flex: 1 0 auto;
 }
 
 div.container,
@@ -164,6 +177,9 @@ blockquote {
 /* ---------- Navigation ---------- */
 
 nav.navbar {
+    position        : sticky;
+    top             : 0;
+    z-index         : 30;
     background-color: var(--ao-green);
     box-shadow      : 0 2px 5px rgba(0, 0, 0, 0.5);
     height          : 50px;
@@ -768,6 +784,106 @@ nav.navbar img {
 
 .back-to-top:hover {
     background: var(--ao-teal);
+}
+
+/* On a phone the footer wraps over several lines, so it only sticks from tablet width. */
+@media (min-width: 768px) {
+    html {
+        scroll-padding-bottom: 3.5rem;
+    }
+
+    .site-footer {
+        position  : sticky;
+        bottom    : 0;
+        z-index   : 20;
+        padding   : .75rem 0;
+        background: var(--ao-page-bg);
+    }
+
+    .back-to-top {
+        bottom: 4.5rem;
+    }
+}
+
+/* ---------- Page index (wide screens only) ---------- */
+
+.page-index {
+    display: none;
+}
+
+@media (min-width: 1400px) {
+    /* Fixed in the empty space to the right of the 900px wide content. */
+    .page-index {
+        display            : block;
+        position           : fixed;
+        top                : calc(50px + 3rem);
+        left               : calc(50% + 450px + 1.5rem);
+        width              : calc(50% - 450px - 3rem);
+        max-width          : 240px;
+        max-height         : calc(100vh - 50px - 3rem - 5rem);
+        overflow-y         : auto;
+        overscroll-behavior: contain;
+        font-size          : .9rem;
+        scrollbar-width    : thin;
+    }
+}
+
+.page-index-title,
+.page-index-year {
+    font-size     : .75rem;
+    font-weight   : 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color         : var(--bs-secondary-color);
+}
+
+.page-index-title {
+    margin: 0 0 .5rem;
+}
+
+.page-index-year {
+    margin : 0;
+    padding: .6rem 0 .2rem .85rem;
+}
+
+.page-index ul {
+    margin    : 0;
+    padding   : 0;
+    list-style: none;
+}
+
+.page-index > ul,
+.page-index-months {
+    border-left: 2px solid var(--bs-border-color);
+}
+
+.page-index li[hidden] {
+    display: none;
+}
+
+.page-index a {
+    display        : block;
+    margin-left    : -2px;
+    padding        : .2rem 0 .2rem .85rem;
+    border-left    : 2px solid transparent;
+    color          : var(--bs-secondary-color);
+    text-decoration: none;
+    transition     : color .15s ease, border-color .15s ease;
+}
+
+.page-index .page-index-sub,
+.page-index-months a {
+    padding-left: 1.6rem;
+}
+
+.page-index a:hover {
+    color: var(--bs-body-color);
+}
+
+.page-index a.is-active {
+    color            : var(--ao-green);
+    border-left-color: var(--ao-green);
+    font-weight      : 600;
 }
 
 /* ---------- Skeleton while loading ---------- */

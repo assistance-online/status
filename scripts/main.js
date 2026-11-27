@@ -34,6 +34,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const FILTER_HASH_PREFIX = '#onderdeel=';
 const ISSUE_HASH_PATTERN = /^#issue-(\d+)$/;
 const SEARCH_DEBOUNCE_MS = 200;
+// A section counts as the current one in the page index once its top passes this far below the sticky header.
+const PAGE_INDEX_OFFSET_PX = 120;
 
 // Components are grouped by the prefix of their label; anything else ends up in the last group.
 const COMPONENT_GROUPS = [
@@ -101,10 +103,21 @@ function formatRelative(isoDate, now = Date.now()) {
     return format.format(Math.round(minutes / 1440), 'day');
 }
 
+function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function formatMonth(isoDate) {
-    const month = new Intl.DateTimeFormat(window.i18n.locale, { month: 'long', year: 'numeric' })
-        .format(new Date(isoDate));
-    return month.charAt(0).toUpperCase() + month.slice(1);
+    return capitalize(new Intl.DateTimeFormat(window.i18n.locale, { month: 'long', year: 'numeric' }).format(new Date(isoDate)));
+}
+
+function formatMonthName(isoDate) {
+    return capitalize(new Intl.DateTimeFormat(window.i18n.locale, { month: 'long' }).format(new Date(isoDate)));
+}
+
+function getMonthKey(isoDate) {
+    const date = new Date(isoDate);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function formatDuration(fromIso, toIso) {
@@ -634,6 +647,25 @@ function renderHistory() {
     do {
         renderNextHistoryBatch();
     } while (state.historyRendered < previouslyRendered && state.historyRendered < state.historyIssues.length);
+
+    renderPageIndexMonths();
+}
+
+// Lists every month of the (filtered) history, including months whose items aren't rendered yet.
+function renderPageIndexMonths() {
+    const years = new Map();
+    state.historyIssues.forEach(issue => {
+        const year = new Date(issue.createdAt).getFullYear();
+        const months = years.get(year) ?? new Map();
+        months.set(getMonthKey(issue.createdAt), formatMonthName(issue.createdAt));
+        years.set(year, months);
+    });
+
+    document.getElementById('page-index-months').innerHTML = [...years].map(([year, months]) => `
+        <p class="page-index-year">${year}</p>
+        <ul>${[...months].map(([key, name]) => `
+            <li><a href="#month-${key}" data-target="month-${key}">${escapeHtml(name)}</a></li>`).join('')}
+        </ul>`).join('');
 }
 
 function renderNextHistoryBatch() {
@@ -642,7 +674,9 @@ function renderNextHistoryBatch() {
 
     const html = batch.map(issue => {
         const month = formatMonth(issue.createdAt);
-        const header = month !== state.historyLastMonth ? `<h3 class="history-month">${escapeHtml(month)}</h3>` : '';
+        const header = month !== state.historyLastMonth
+            ? `<h3 class="history-month" id="month-${getMonthKey(issue.createdAt)}">${escapeHtml(month)}</h3>`
+            : '';
         state.historyLastMonth = month;
         return header + renderHistoryItem(issue);
     }).join('');
@@ -684,6 +718,56 @@ function render() {
     renderSection('current', openState, renderCurrent);
     renderSection('history', [status.closedIssues, state.search], renderHistory);
     updateCountdowns();
+    updatePageIndex();
+}
+
+function updatePageIndex() {
+    const links = [...document.querySelectorAll('#page-index a[data-target]')];
+    // At the bottom of the page the last sections can't scroll up any further, so the last one wins.
+    const atBottom = window.scrollY > 0 && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    let active = null;
+    links.forEach(link => {
+        const target = document.getElementById(link.dataset.target);
+        const section = target?.closest('section');
+        link.parentElement.hidden = Boolean(section?.hidden);
+        if (target && !section?.hidden && (atBottom || target.getBoundingClientRect().top <= PAGE_INDEX_OFFSET_PX)) {
+            active = link;
+        }
+    });
+    active ??= links[0];
+
+    links.forEach(link => {
+        link.classList.toggle('is-active', link === active);
+        if (link === active) {
+            link.setAttribute('aria-current', 'location');
+        } else {
+            link.removeAttribute('aria-current');
+        }
+    });
+
+    // Keep the active month in view when the list of months is taller than the screen.
+    const index = document.getElementById('page-index');
+    if (active && index.scrollHeight > index.clientHeight) {
+        const linkTop = active.offsetTop - index.offsetTop;
+        if (linkTop < index.scrollTop || linkTop > index.scrollTop + index.clientHeight - active.offsetHeight) {
+            index.scrollTop = linkTop - index.clientHeight / 2;
+        }
+    }
+}
+
+// Months further down may not be rendered yet: render history batches until the target exists.
+function scrollToIndexTarget(id) {
+    while (!document.getElementById(id) && state.historyRendered < state.historyIssues.length) {
+        renderNextHistoryBatch();
+    }
+    const target = document.getElementById(id);
+    if (!target) {
+        return;
+    }
+    target.scrollIntoView({ block: 'start', behavior: prefersReducedMotion.matches ? 'instant' : 'smooth' });
+    if (id === 'history-search-wrap') {
+        document.getElementById('history-search').focus({ preventScroll: true });
+    }
 }
 
 // ---------- Behaviour ----------
@@ -804,10 +888,24 @@ function setUpInteractions() {
 
     document.getElementById('filter-clear').addEventListener('click', () => setFilter(null));
 
+    // The index scrolls itself instead of following its links, because the hash holds the filter or a linked issue.
+    document.getElementById('page-index').addEventListener('click', event => {
+        const link = event.target.closest('a[data-target]');
+        if (link) {
+            event.preventDefault();
+            scrollToIndexTarget(link.dataset.target);
+        }
+    });
+
     const backToTop = document.getElementById('back-to-top');
     backToTop.addEventListener('click', () => window.scrollTo({ top: 0 }));
+    let scrollFrame = null;
     window.addEventListener('scroll', () => {
         backToTop.hidden = window.scrollY < BACK_TO_TOP_AFTER_PX;
+        scrollFrame ??= requestAnimationFrame(() => {
+            scrollFrame = null;
+            updatePageIndex();
+        });
     }, { passive: true });
 
     window.addEventListener('hashchange', handleHashChange);
