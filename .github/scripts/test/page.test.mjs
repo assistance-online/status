@@ -208,17 +208,6 @@ describe('status page scheduling, analysis and search', () => {
         return status;
     }
 
-    it('warns when the data has not been updated for hours', async () => {
-        const document = await load({ status: statusWith(status => { status.generatedAt = isoDaysAgo(0.5); }) });
-        assert.equal(document.getElementById('stale-warning').hidden, false);
-        assert.match(text(document, '#stale-warning'), /mogelijk verouderd/);
-    });
-
-    it('does not warn for recent data', async () => {
-        const document = await load();
-        assert.equal(document.getElementById('stale-warning').hidden, true);
-    });
-
     it('shows the planned time and a countdown for an upcoming release', async () => {
         const document = await load({ status: statusWith(status => {
             Object.assign(status.openIssues[1], { startAt: isoDaysAgo(-3), endAt: isoDaysAgo(-3.02) });

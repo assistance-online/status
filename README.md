@@ -12,7 +12,7 @@ De statuspagina is een statische site op GitHub Pages. De browser roept de GitHu
 4. Het script [`build-status.mjs`](.github/scripts/build-status.mjs) haalt de labels, issues en reacties op. Het zet de markdown om naar veilige HTML, berekent de storingen van de afgelopen 90 dagen en schrijft `status.json`, de RSS-feed `feed.xml`, de agenda `agenda.ics` en de badge `badge.svg`.
 5. De workflow publiceert de site samen met die bestanden op GitHub Pages.
 
-Een wijziging staat na ongeveer een minuut op de pagina. Een geopende pagina haalt elke minuut zelf de nieuwste status op, dus verversen is niet nodig. Staat een wijziging er niet, kijk dan bij **Actions** of de laatste run gelukt is. Is de status meer dan drie uur niet bijgewerkt, dan toont de pagina een waarschuwing dat de gegevens mogelijk verouderd zijn; dan is het publiceren stuk.
+Een wijziging staat na ongeveer een minuut op de pagina. Een geopende pagina haalt elke minuut zelf de nieuwste status op, dus verversen is niet nodig. Staat een wijziging er niet, kijk dan bij **Actions** of de laatste run gelukt is. Mislukt een run, dan mailt GitHub degene die de run veroorzaakte (bijvoorbeeld door een issue aan te passen).
 
 ## Abonneren en insluiten
 

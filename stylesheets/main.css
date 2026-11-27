@@ -438,23 +438,7 @@ nav.navbar img {
     margin-bottom: 0;
 }
 
-/* ---------- Stale data, search, schedule and analysis ---------- */
-
-.stale-warning {
-    display      : flex;
-    gap          : .5rem;
-    align-items  : baseline;
-    padding      : .6rem 1rem;
-    margin       : -.75rem 0 1.5rem;
-    border-radius: .375rem;
-    background   : var(--status-warning-bg);
-    color        : var(--status-warning-on);
-    font-weight  : 600;
-}
-
-.stale-warning[hidden] {
-    display: none;
-}
+/* ---------- Search, schedule and analysis ---------- */
 
 .history-search {
     position     : relative;

@@ -33,8 +33,6 @@ const AVAILABILITY_DAYS = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FILTER_HASH_PREFIX = '#onderdeel=';
 const ISSUE_HASH_PATTERN = /^#issue-(\d+)$/;
-// The data is rebuilt at least hourly; much older data means publishing has stopped working.
-const STALE_AFTER_MS = 3 * 60 * 60 * 1000;
 const SEARCH_DEBOUNCE_MS = 200;
 
 // Components are grouped by the prefix of their label; anything else ends up in the last group.
@@ -411,15 +409,6 @@ function renderLastUpdated() {
     }
 }
 
-function renderStaleWarning() {
-    const warning = document.getElementById('stale-warning');
-    const stale = Date.now() - Date.parse(state.status.generatedAt) > STALE_AFTER_MS;
-    warning.hidden = !stale;
-    if (stale) {
-        warning.querySelector('span').textContent = t('stale.warning', { date: formatDateTime(state.status.generatedAt) });
-    }
-}
-
 function updateCountdowns() {
     document.querySelectorAll('[data-starts-at]').forEach(element => {
         element.textContent = t('schedule.startsIn', { relative: formatRelative(element.dataset.startsAt) });
@@ -689,7 +678,6 @@ function render() {
     const openState = [status.openIssues, status.openIssues.map(getEffectiveMilestone)];
     renderSection('system', [getCurrentIssues().map(getEffectiveMilestone), openState], renderSystemStatus);
     renderLastUpdated();
-    renderStaleWarning();
     renderFilterInfo();
     renderSection('components', [status.labels, openState, status.availability, new Date().toDateString()], renderComponents);
     renderSection('planned', openState, renderPlanned);
@@ -836,7 +824,7 @@ function setUpInteractions() {
         }
     });
 
-    // Also re-render with unchanged data: countdowns, maintenance windows and the stale check depend on the time.
+    // Also re-render with unchanged data: countdowns and maintenance windows depend on the time.
     setInterval(async () => {
         if (!document.hidden) {
             await loadStatus();
